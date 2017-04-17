@@ -19,6 +19,11 @@ const (
 )
 
 // ==========================================================================
+type ProbeCategory string
+
+const (
+	CloudNative ProbeCategory = "Cloud Native"
+)
 // Constants for the Mesos probe account definition fields in the Turbo server
 type ProbeAcctDefEntryName string
 

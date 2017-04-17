@@ -17,19 +17,21 @@ var (
 
 //TODO: change sdk builder to accept nil values
 // Returns 0 if value is nil or not set
-func getValue(nodeMetrics *data.EntityResourceMetrics, resourceType data.ResourceType, metricType data.MetricPropType) *float64 {
-	var zero_value = 0.0
-	resourceMetric := nodeMetrics.GetResourceMetric(resourceType, metricType)
-	if resourceMetric == nil {
-		return  &zero_value
+func getEntityMetricValue(mesosEntity MesosEntity, resourceType data.ResourceType, metricType data.MetricPropType, ec *ErrorCollector) *float64 {
+	var zero_value = data.DEFAULT_VAL
+	resourceMetric, err := mesosEntity.GetResourceMetric(resourceType, metricType)
+	if err != nil {
+		ec.Collect(err)
+		return &zero_value
 	}
 
-	if resourceMetric.GetValue() != nil {
-		return resourceMetric.GetValue()
+	if resourceMetric.value != nil {
+		return resourceMetric.value
 	}
 
 	return &zero_value
 }
+
 
 
 

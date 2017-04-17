@@ -1,6 +1,8 @@
 package data
 
-import "time"
+import (
+	"time"
+)
 
 type MesosMaster struct {
 	Id     string
@@ -11,4 +13,5 @@ type MesosMaster struct {
 	FrameworkMap map[string]*Framework
 	TaskMap      map[string]*Task
 	TimeSinceLastDisc *time.Time
+	AgentList 	[]*Agent
 }

@@ -19,16 +19,16 @@ type Agent struct {
 	UsedResources    Resources `json:"used_resources"`
 	OfferedResources Resources `json:"offered_resources"`
 	Name             string    `json:"hostname"`
-	Calculated       CalculatedUse
+	//Calculated       CalculatedUse
 	//Attributes       Attributes `json:"attributes"`
 	Active  bool   `json:"active"`
 	Version string `json:"version"`
 	// -------- Computed parameters
+	ClusterName string
 	IP               string // parsed ip for the Slave
 	Port             string
 	ResourceUseStats *CalculatedUse
 	TaskMap          map[string]*Task
-
 }
 
 // assumed to be framework from slave , not from master state
@@ -59,7 +59,6 @@ type Task struct {
 	RawStatistics    Statistics //read by querying the agent
 	ResourceUseStats *CalculatedUse
 }
-
 
 type Discovery struct {
 	Name       string    `json:"name"`
@@ -113,7 +112,7 @@ type Statistics struct {
 	CPUsystemTimeSecs float64 `json:"cpus_system_time_secs"`
 	CPUuserTimeSecs   float64 `json:"cpus_user_time_secs"`
 	DiskLimitBytes    float64 `json:"disk_limit_bytes"`
-	DiskUsedBytes     float64 `json:"disk_used_bytes"`
+	DiskUsedBytes     float64 `json:"disk_used_bytes`
 }
 
 type Executor struct {
@@ -172,5 +171,5 @@ type CalculatedUse struct {
 	Disk   float64
 	MemKB  float64
 	CPUMHz float64
-	UsedPorts map[string]PortUtil
+	//UsedPorts map[string]PortUtil
 }
