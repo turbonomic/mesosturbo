@@ -1,0 +1,7 @@
+{
+  "master": "Mesosphere DCOS",
+  "master-ip": "<Mesos Master IP>",
+  "master-port": "",
+  "master-user": "<Mesos Master Username>",
+  "master-pwd": "<Mesos Master Password>"
+}

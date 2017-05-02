@@ -1,0 +1,7 @@
+{
+  "master": "Apache Mesos",
+  "master-ip": "<Mesos Master IP>",
+  "master-port": "<Mesos Master Port>",
+  "master-user": "<Mesos Master Username>",
+  "master-pwd": "<Mesos Master Password>"
+}
