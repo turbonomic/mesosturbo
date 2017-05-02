@@ -1,15 +1,13 @@
 package discovery
 
 import (
-
-	"github.com/turbonomic/mesosturbo/pkg/data"
-	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
-	"github.com/turbonomic/turbo-go-sdk/pkg/builder"
-	"github.com/golang/glog"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/turbonomic/mesosturbo/pkg/data"
+	"github.com/turbonomic/turbo-go-sdk/pkg/builder"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 	"strings"
 )
-
 
 var (
 	APP_ENTITY_PREFIX string = "APP-"
@@ -17,120 +15,108 @@ var (
 
 // Builder for creating Application Entities to represent the Mesos Tasks in Turbo server
 type AppEntityBuilder struct {
-	mesosMaster    *data.MesosMaster
-	taskMetricsMap map[string]*data.EntityResourceMetrics
-	builderError   []error
+	nodeRepository *NodeRepository
+	errorCollector *ErrorCollector
 }
-
-
 
 // Build Application EntityDTO using the tasks listed in the 'state' json returned from the Mesos Master
 func (tb *AppEntityBuilder) BuildEntities() ([]*proto.EntityDTO, error) {
+	tb.errorCollector = new(ErrorCollector)
 	glog.V(2).Infof("[BuildEntities] ...... ")
 	result := []*proto.EntityDTO{}
-	tb.builderError = []error{}
 
-	taskMap:= tb.mesosMaster.TaskMap
-	for _, task := range taskMap {
-		if task.State != "TASK_RUNNING" {
+	var taskEntitiesMap map[string]*TaskEntity
+	taskEntitiesMap = tb.nodeRepository.GetTaskEntities()
+	for _, taskEntity := range taskEntitiesMap {
+		task := taskEntity.task
+		if task == nil {
+			tb.errorCollector.Collect(fmt.Errorf("Null task object for entity %s", taskEntity.GetId()))
 			continue
 		}
-		appMetrics := tb.getTaskMetrics(task)
+		if task.State != "TASK_RUNNING" {
+			tb.errorCollector.Collect(fmt.Errorf("Task object is not running %s", taskEntity.GetId()))
+			continue
+		}
 
 		// Commodities sold
 		commoditiesSoldApp := tb.appCommsSold(task)
 		// Application Entity for the task
 		entityDTOBuilder := tb.appEntityDTO(task, commoditiesSoldApp)
 		// Commodities bought
-		entityDTOBuilder = tb.appCommoditiesBought(entityDTOBuilder, task, appMetrics)
+		entityDTOBuilder = tb.appCommoditiesBought(entityDTOBuilder, taskEntity)
 		// Entity DTO
 		entityDTO, err := entityDTOBuilder.Create()
-		if err != nil {
-			tb.builderError = append(tb.builderError, err)
-		}
+		tb.errorCollector.Collect(err)
+
 		result = append(result, entityDTO)
 	}
 	glog.V(4).Infof("[BuildEntities] App DTOs :", result)
-	return result, fmt.Errorf("VM entity builder errors: %+v", tb.builderError)
+
+	var collectedErrors error
+	if tb.errorCollector.Count() > 0 {
+		collectedErrors = fmt.Errorf("Application entity builder errors: %+v", tb.errorCollector)
+	}
+	return result, collectedErrors
 }
 
-func (tb *AppEntityBuilder) getTaskMetrics(task *data.Task) *data.EntityResourceMetrics {
-	appMetrics, ok := tb.taskMetricsMap[task.Id]
-	if !ok {
-		return nil
-	}
-	return appMetrics
-}
 // Build Application DTO
 func (tb *AppEntityBuilder) appEntityDTO(task *data.Task, commoditiesSold []*proto.CommodityDTO) *builder.EntityDTOBuilder {
 	appEntityType := proto.EntityDTO_APPLICATION
 	id := strings.Join([]string{APP_ENTITY_PREFIX, task.Name, "-", task.Id}, "")
-	dispName := strings.Join([]string{APP_ENTITY_PREFIX}, task.Name)
+	dispName := strings.Join([]string{APP_ENTITY_PREFIX, task.Name}, "")
 	entityDTOBuilder := builder.NewEntityDTOBuilder(appEntityType, id).
-					DisplayName(dispName).
-					SellsCommodities(commoditiesSold)
+		DisplayName(dispName).
+		SellsCommodities(commoditiesSold)
 
 	return entityDTOBuilder
 }
 
-
 // Build commodityDTOs for commodity sold by the app
-func  (tb *AppEntityBuilder) appCommsSold(task *data.Task) []*proto.CommodityDTO {
+func (tb *AppEntityBuilder) appCommsSold(task *data.Task) []*proto.CommodityDTO {
 
 	var commoditiesSold []*proto.CommodityDTO
 	transactionComm, err := builder.NewCommodityDTOBuilder(proto.CommodityDTO_TRANSACTION).
-					Key(task.Name).
-					Create()
-	if err != nil {
-		tb.builderError = append(tb.builderError, err)
-	}
+		Key(task.Name).
+		Create()
+	tb.errorCollector.Collect(err)
 	commoditiesSold = append(commoditiesSold, transactionComm)
 	return commoditiesSold
 }
 
 // Build commodityDTOs for commodity bought by the app
-func (tb *AppEntityBuilder) appCommoditiesBought(appDto *builder.EntityDTOBuilder, task *data.Task, appMetrics *data.EntityResourceMetrics) *builder.EntityDTOBuilder {
-	if task == nil {
-		tb.builderError = append(tb.builderError, fmt.Errorf("Null task while creating sold commodities"))
+func (tb *AppEntityBuilder) appCommoditiesBought(appDto *builder.EntityDTOBuilder, taskEntity *TaskEntity) *builder.EntityDTOBuilder {
+	if taskEntity == nil || taskEntity.task == nil {
+		tb.errorCollector.Collect(fmt.Errorf("Null task while creating sold commodities"))
 		return nil
 	}
+
+	task := taskEntity.task
 
 	var commoditiesBought []*proto.CommodityDTO
 	vMemCommBuilder := builder.NewCommodityDTOBuilder(proto.CommodityDTO_VMEM)
 	vCpuCommBuilder := builder.NewCommodityDTOBuilder(proto.CommodityDTO_VCPU)
-	if appMetrics != nil {
-		// VMem
-		memUsed := getValue(appMetrics, data.MEM, data.USED)
-		vMemCommBuilder.
-			Used(*memUsed)
+	// VMem
+	memUsed := getEntityMetricValue(taskEntity, data.MEM, data.USED, tb.errorCollector)
+	vMemCommBuilder.Used(*memUsed)
 
-		// VCpu
-		cpuUsed := getValue(appMetrics, data.CPU, data.USED)
-		vCpuCommBuilder.
-			Used(*cpuUsed)
-	} else {
-		tb.builderError = append(tb.builderError, fmt.Errorf("Null metrics for task %s", task.Id))
-	}
+	// VCpu
+	cpuUsed := getEntityMetricValue(taskEntity, data.CPU, data.USED, tb.errorCollector)
+	vCpuCommBuilder.Used(*cpuUsed)
 
 	vMemComm, err := vMemCommBuilder.Create()
+	tb.errorCollector.Collect(err)
 	commoditiesBought = append(commoditiesBought, vMemComm)
-	if err != nil {
-		tb.builderError = append(tb.builderError, err)
-	}
 
 	vCpuComm, err := vCpuCommBuilder.Create()
+	tb.errorCollector.Collect(err)
 	commoditiesBought = append(commoditiesBought, vCpuComm)
-	if err != nil {
-		tb.builderError = append(tb.builderError, err)
-	}
 
 	// Application commodity
 	applicationComm, err := builder.NewCommodityDTOBuilder(proto.CommodityDTO_APPLICATION).
-				Key(task.Id).
-				Create()
-	if err != nil {
-		tb.builderError = append(tb.builderError, err)
-	}
+		Key(task.Id).
+		Create()
+	tb.errorCollector.Collect(err)
+
 	commoditiesBought = append(commoditiesBought, applicationComm)
 
 	// From Container
