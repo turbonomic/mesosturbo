@@ -1,0 +1,9 @@
+{
+  "serverMeta": {
+    "turboServer": "https://<turbo-server-ipaddress>:<turbo-server-port>"
+  },
+  "restAPIConfig": {
+    "opsManagerUserName": "<username>",
+    "opsManagerPassword": "<password>"
+  }
+}
