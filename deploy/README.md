@@ -32,6 +32,7 @@ To build binary that is runnable in linux environment, use this command with the
 a username and pwd.  If you don't have a Docker ID, head over to 
 [DockerHub HomePage](https://hub.docker.com) to create one.
 * Need [Dockerfile](https://docs.docker.com/engine/reference/builder/) which is found at the root dir of the mesosturbo project. 
+  * Change the name of the maintainer in the file 
 
 Build and push Mesosturbo Container Image -
 * Build a Docker Image. 
@@ -62,8 +63,11 @@ At the root dir of your mesosturbo project where the Dockerfile is located, run
 > NOTE: Ensure that the Mesosturbo container image is pushed to docker hub or an image registry 
 > that is accessible to the Marathon service in the Mesos Cluster.
 ##### Prerequisites 
+* Know your Mesos Master IP and port
 * Marathon service is available in the Mesos Cluster for deploying applications.
 * Marathon service has internet access to the DockerHub or the registry where the container image resides.
+* Install Operations Manager 5.9+ and know its IP
+* Know the username and password for the Rest API user for Operations Manager.
 
 Containers are deployed by Marathon Service running in Mesos. 
 
@@ -80,7 +84,7 @@ Containers are deployed by Marathon Service running in Mesos.
     "volumes": []
   },
   "args": [
-    "--mesostype", "Mesosphere DCOS",
+    "--mesostype", "<MESOS MASTER TYPE>",
     "--masterip", "<MESOS-MASTER-IP>"
     "--masterport", "<MESOS-MASTER-PORT>",
     "--masteruser", "<MESOS-MASTER-USER>",
@@ -97,6 +101,9 @@ Containers are deployed by Marathon Service running in Mesos.
 
 > Replace 
 > * \<yourname\>/mesosturbo:\<your-tag\> with Name of the docker image tag
+> * \<MESOS MASTER TYPE> with 
+>  * "Mesosphere DCOS" for Mesosphere DC/OS 
+>  * "Apache Mesos" for Apache Mesos
 > * \<MESOS-MASTER-IP> with IP address for the Mesos Master
 > * \<MESOS-MASTER-PORT> with the port for the Mesos Master
 > * \<MESOS-MASTER-USER> with the Username for the Mesos Master
