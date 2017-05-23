@@ -8,8 +8,8 @@
     "volumes": []
   },
   "args": [
-    "--mesostype", "Mesosphere DCOS",
-    "--masterip", "<MESOS-MASTER-IP>"
+    "--mesostype", "Apache Mesos",
+    "--masterip", "<MESOS-MASTER-IP>",
     "--masterport", "<MESOS-MASTER-PORT>",
     "--masteruser", "<MESOS-MASTER-USER>",
     "--masterpwd", "<MESOS-MASTER-PASSWORD>",
