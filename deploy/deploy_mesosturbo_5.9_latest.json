@@ -2,7 +2,7 @@
   "id": "mesosturbo",
   "container": {
     "docker": {
-      "image": "<yourname>/mesosturbo:<your-tag>"
+      "image": "vmturbo/mesosturbo:5.9-latest"
     },
     "type": "DOCKER",
     "volumes": []

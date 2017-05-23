@@ -3,7 +3,7 @@ Once deployed, the Mesosturbo service enables you to give Turbonomic visibility 
 
 ### Prerequisites
 * Turbonomic 5.9+
-* Running Mesos Apache XXX or Mesosphere DCOS 1.8
+* Running Mesos Apache or Mesosphere DCOS 1.8
 
 ### Step One: Deploying the Mesosturbo Docker Container Image
 > NOTE: Ensure that the Turbonomic Mesosturbo container image on DockerHub is accessible to the Marathon service in the Mesos Cluster.
@@ -16,7 +16,9 @@ Once deployed, the Mesosturbo service enables you to give Turbonomic visibility 
 
 Containers are deployed by Marathon Service running in Mesos. 
 
-#### Mesosturbo Container Definition
+##### Mesosturbo Container Definition
+
+A copy of the deploy config can be downloaded from [here](deploy_mesosturbo_5.9_latest.json)
 
 ```yaml
 {
@@ -46,8 +48,8 @@ Containers are deployed by Marathon Service running in Mesos.
 
 > Replace 
 > * \<MESOS MASTER TYPE> with 
->  * "Mesosphere DCOS" for Mesosphere DC/OS 
->  * "Apache Mesos" for Apache Mesos
+>   * "Mesosphere DCOS" for Mesosphere DC/OS 
+>   * "Apache Mesos" for Apache Mesos
 > * \<MESOS-MASTER-IP> with IP address for the Mesos Master
 > * \<MESOS-MASTER-PORT> with the port for the Mesos Master
 > * \<MESOS-MASTER-USER> with the Username for the Mesos Master
