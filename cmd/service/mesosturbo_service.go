@@ -16,19 +16,18 @@ import (
 
 // VMTServer has all the context and params needed to run a Scheduler
 type MesosTurboService struct {
-	LogVersion int
+	LogVersion         int
 	MesosMasterConfig  string	//path to the mesos master config
 	TurboCommConfig    string	// path to the turbo communication config file
 
 	// config for mesos
-	Master         string
-	MasterIP       string
-	MasterPort     string
-	MasterUsername string
-	MasterPassword string
+	Master             string
+	MasterIPPort       string
+	MasterUsername     string
+	MasterPassword     string
 
 	// config for turbo server
-	TurboServerUrl 	   string
+	TurboServerUrl     string
 	OpsManagerUsername string
 	OpsManagerPassword string
 }
@@ -46,8 +45,7 @@ func (s *MesosTurboService) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.TurboCommConfig, "turboconfig", s.TurboCommConfig, "Path to the turbo config flag.")
 
 	fs.StringVar(&s.Master, "mesostype", s.Master, "Mesos Master Type 'Apache Mesos'|'Mesosphere DCOS'")
-	fs.StringVar(&s.MasterIP, "masterip", s.MasterIP, "IP for the Mesos Master")
-	fs.StringVar(&s.MasterPort, "masterport", s.MasterPort, "Port for the Mesos Master")
+	fs.StringVar(&s.MasterIPPort, "masteripport", s.MasterIPPort, "Comma separated list of IP:port of each Mesos Master in the cluster")
 	fs.StringVar(&s.MasterUsername, "masteruser", s.MasterUsername, "User for the Mesos Master")
 	fs.StringVar(&s.MasterPassword, "masterpwd", s.MasterPassword, "Password for the Mesos Master")
 
@@ -67,6 +65,7 @@ func (s *MesosTurboService) Run(_ []string) error {
 	// ----------- Mesos Target Config
 	var mesosTargetConf *conf.MesosTargetConf
 	var mesosConfErr error
+
 	if targetConf != "" {
 		mesosTargetConf, mesosConfErr = conf.NewMesosTargetConf(targetConf)
 	} else {
@@ -81,14 +80,14 @@ func (s *MesosTurboService) Run(_ []string) error {
 		if (master == "") {
 			mesosConfErr = fmt.Errorf("Mesos Master Type is required")
 		}
-		if (s.MasterIP == "") {
-			mesosConfErr = fmt.Errorf("Mesos Master IP is required")
+
+		if (s.MasterIPPort == "") {
+			mesosConfErr = fmt.Errorf("Mesos Master IP::Port list is required")
 		}
 
 		mesosTargetConf = &conf.MesosTargetConf{
 			Master: master,
-			MasterIP: s.MasterIP,
-			MasterPort: s.MasterPort,
+			MasterIPPort: s.MasterIPPort,
 			MasterUsername: s.MasterUsername,
 			MasterPassword: s.MasterPassword,
 		}
@@ -138,11 +137,11 @@ func (s *MesosTurboService) Run(_ []string) error {
 	discoveryClient, err := discovery.NewDiscoveryClient(mesosMasterType, mesosTargetConf)
 
 	if err != nil {
-		glog.Errorf("Error creating discovery client for "+string(mesosMasterType)+"::"+mesosTargetConf.MasterIP+"\n", err.Error())
+		glog.Errorf("Error creating discovery client for "+string(mesosMasterType)+"::"+mesosTargetConf.LeaderIP +"\n", err.Error())
 		os.Exit(1)
 	}
 
-	mesosTarget := mesosTargetConf.MasterIP
+	mesosTarget := mesosTargetConf.MasterIPPort
 	tapService, err :=
 		service.NewTAPServiceBuilder().
 			WithTurboCommunicator(turboCommConfigData).

@@ -58,7 +58,7 @@ func (agentRestClient *GenericAgentAPIClient) GetStats() ([]data.Executor, error
 	// Execute request
 	endpoint, _ := agentRestClient.EndpointStore.EndpointMap[Stats]
 	request, err := createRequest(endpoint.EndpointPath,
-					agentRestClient.AgentConf.AgentIP,  agentRestClient.AgentConf.AgentPort,
+					agentRestClient.AgentConf.AgentIP, string(agentRestClient.AgentConf.AgentPort),
 					agentRestClient.MasterConf.Token)
 	if err != nil {
 		return nil, ErrorCreateRequest(AgentAPIClientClass, err)
