@@ -1,7 +1,6 @@
 {
   "master": "Apache Mesos",
-  "master-ip": "<Mesos Master IP>",
-  "master-port": "<Mesos Master Port>",
+  "master-ipport": "<Comma separated list of host and port of each Mesos Master in the cluster>",
   "master-user": "<Mesos Master Username>",
   "master-pwd": "<Mesos Master Password>"
 }

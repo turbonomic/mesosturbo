@@ -25,6 +25,7 @@ type MesosDiscoveryClient struct {
 	mesosMasterType     conf.MesosMasterType
 	clientConf          *conf.MesosTargetConf
 	masterRestClient    master.MasterRestClient
+	urlList		    []*MesosMasterUrl
 
 	// Map of targetId and Mesos Master
 	metricsStore 	*MesosMetricsMetadataStore
@@ -116,7 +117,7 @@ func (discoveryClient *MesosDiscoveryClient) initDiscoveryClient() error {
 	token, err := masterRestClient.Login()
 	if err != nil {
 		return fmt.Errorf("Error logging to Mesos Master at "+
-			clientConf.MasterIP+"::"+clientConf.MasterPort+" : ", err)
+			clientConf.LeaderIP +"::"+clientConf.LeaderPort +" : ", err)
 	}
 
 	clientConf.Token = token
@@ -134,7 +135,7 @@ func (discoveryClient *MesosDiscoveryClient) GetAccountValues() *probe.TurboTarg
 	accountValues = clientConf.GetAccountValues()
 
 	glog.Infof("[MesosDiscoveryClient] account values %s\n", accountValues)
-	targetInfo := probe.NewTurboTargetInfoBuilder(PROBE_CATEGORY, string(clientConf.Master), string(conf.MasterIP), accountValues).Create()
+	targetInfo := probe.NewTurboTargetInfoBuilder(PROBE_CATEGORY, string(clientConf.Master), string(conf.MasterIPPort), accountValues).Create()
 	// TODO: change this to return the account values so that the turbo probe can create the target data
 	return targetInfo //accountValues
 }
@@ -162,15 +163,31 @@ func (discoveryClient *MesosDiscoveryClient) Validate(accountValues []*proto.Acc
 // Discover the Target Topology
 func (discoveryClient *MesosDiscoveryClient) Discover(accountValues []*proto.AccountValue) (*proto.DiscoveryResponse, error) {
 	// TODO: use account values to create target conf ?
+	//target, err := conf.CreateMesosTargetConf(discoveryClient.mesosMasterType, accountValues)
+	//mesosConf, ok := target.(*conf.MesosTargetConf)
+	//if (!ok) {
+	//	return nil, fmt.Errorf("Invalid target : %s", accountValues)
+	//}
+
+	mesosConf := discoveryClient.clientConf
+	// Select the leader to connect
+	if discoveryClient.urlList == nil {
+		discoveryClient.urlList = ParseMasterIPPorts(mesosConf.MasterIPPort)
+	}
+	//urlList := ParseMasterIPPorts(mesosConf.MasterIPPort)
+	mesosLeader, err := NewMesosLeader(mesosConf.Master, discoveryClient.urlList , mesosConf.MasterUsername, mesosConf.MasterPassword)
+
 	// Connect to mesos master client
-	mesosState, err := discoveryClient.masterRestClient.GetState()
+	//mesosState, err := discoveryClient.masterRestClient.GetState()
 	if err != nil {
 		glog.Errorf("Error getting state from master : %s \n", err)
 		return nil, fmt.Errorf("Error getting state from master : %s", err)
 	}
+	mesosState := mesosLeader.MasterState
+	discoveryClient.clientConf.LeaderIP = mesosLeader.leaderConf.LeaderIP
+	discoveryClient.clientConf.LeaderPort = mesosLeader.leaderConf.LeaderPort
 	glog.V(3).Infof("Mesos Get Succeeded: %v\n", mesosState)
 
-	// TODO: update leader and reissue request
 	// to create convenience maps for slaves, tasks, convert units
 	mesosMaster, err := discoveryClient.parseMesosState(mesosState)
 	if mesosMaster == nil {
@@ -231,13 +248,13 @@ func (handler *MesosDiscoveryClient) parseMesosState(stateResp *data.MesosAPIRes
 		agent := stateResp.Agents[idx]
 		agent.ClusterName = stateResp.ClusterName
 		glog.V(2).Infof("Agent : %s Id: %s", agent.Name+"::"+agent.Pid, agent.Id)
-		agent.IP, agent.Port = getSlaveIP(agent)
+		agent.IP, agent.PortNum = getSlaveIP(agent)
 		mesosMaster.AgentMap[agent.Id] = &agent
 		handler.agentList = append(handler.agentList, &agent)
 	}
 
 	// Cluster
-	mesosMaster.Cluster.MasterIP = handler.clientConf.MasterIP
+	mesosMaster.Cluster.MasterIP = handler.clientConf.LeaderIP
 	mesosMaster.Cluster.ClusterName = stateResp.ClusterName
 
 	if stateResp.Frameworks == nil {

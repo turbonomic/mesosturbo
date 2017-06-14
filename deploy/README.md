@@ -3,7 +3,7 @@ Once deployed, the Mesosturbo service enables you to give Turbonomic visibility 
 
 ### Prerequisites
 * Turbonomic 5.9+
-* Running Mesos Apache or Mesosphere DCOS 1.8
+* Running Mesos Apache 1.2 or Mesosphere DCOS 1.8
 
 ### Step One: Deploying the Mesosturbo Docker Container Image
 > NOTE: Ensure that the Turbonomic Mesosturbo container image on DockerHub is accessible to the Marathon service in the Mesos Cluster.
@@ -32,8 +32,7 @@ A copy of the deploy config can be downloaded from [here](deploy_mesosturbo_5.9_
   },
   "args": [
     "--mesostype", "<MESOS MASTER TYPE>",
-    "--masterip", "<MESOS-MASTER-IP>"
-    "--masterport", "<MESOS-MASTER-PORT>",
+    "--masteripport", "<MESOS-MASTER-IPPORT>",
     "--masteruser", "<MESOS-MASTER-USER>",
     "--masterpwd", "<MESOS-MASTER-PASSWORD>",
     "--turboserverurl", "http://<TURBO-OPERATIONS-MANAGER-IP>:80",
@@ -50,8 +49,7 @@ A copy of the deploy config can be downloaded from [here](deploy_mesosturbo_5.9_
 > * \<MESOS MASTER TYPE> with 
 >   * "Mesosphere DCOS" for Mesosphere DC/OS 
 >   * "Apache Mesos" for Apache Mesos
-> * \<MESOS-MASTER-IP> with IP address for the Mesos Master
-> * \<MESOS-MASTER-PORT> with the port for the Mesos Master
+> * \<MESOS-MASTER-IPPORT> with the Comma separated list of host and port of each Mesos Master in the cluster
 > * \<MESOS-MASTER-USER> with the Username for the Mesos Master
 > * \<MESOS-MASTER-PASSWORD> with the Password for the Mesos Master
 > * \<TURBO-OPERATIONS-MANAGER-IP> with the IP address for the Turbo Operations Manager

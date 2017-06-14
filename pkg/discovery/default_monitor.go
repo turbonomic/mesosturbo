@@ -51,14 +51,14 @@ func (monitor *DefaultMesosMonitor) Monitor(target *MonitorTarget) error {
 	arrOfExec, err := monitor.getAgentStats(agent, masterConf)
 	glog.V(3).Infof("Parsed executors %s\n", arrOfExec)
 	if err != nil {
-		glog.Errorf("Error obtaining metrics from the agent %s::%s : %s", agent.IP, agent.Port, err)
-		return fmt.Errorf("Error obtaining metrics from the agent %s::%s", agent.IP, agent.Port)
+		glog.Errorf("Error obtaining metrics from the agent %s::%s : %s", agent.IP, agent.PortNum, err)
+		return fmt.Errorf("Error obtaining metrics from the agent %s::%s", agent.IP, agent.PortNum)
 	}
 
 	err = monitor.parseAgentUsedStats(agent, arrOfExec, target.rawStatsCache)
 	if err != nil {
-		glog.Errorf("Error parsing metrics from the agent %s::%s : %s", agent.IP, agent.Port, err)
-		return fmt.Errorf("Error parsing metrics from the agent %s::%s", agent.IP, agent.Port)
+		glog.Errorf("Error parsing metrics from the agent %s::%s : %s", agent.IP, agent.PortNum, err)
+		return fmt.Errorf("Error parsing metrics from the agent %s::%s", agent.IP, agent.PortNum)
 	}
 
 	// And then compute the metric values for the specified metrics and invoke the metric setter to set it in the entity
@@ -159,12 +159,14 @@ func (monitor *DefaultMesosMonitor) setTaskMetrics(taskEntities map[string]*Task
 }
 
 func (monitor *DefaultMesosMonitor) setContainerMetrics(containerEntities map[string]*ContainerEntity, monitoringProps map[ENTITY_ID]*EntityMonitoringProps, ec *ErrorCollector) {
+	glog.Info("============== setContainerMetrics =============")
 	// For each container
 	for _, containerEntity := range containerEntities {
 		var props *EntityMonitoringProps
 		props, exists := monitoringProps[ENTITY_ID(containerEntity.GetId())]
 		if !exists {
-			ec.Collect(fmt.Errorf("%s::%s : Missing monitoring properties", containerEntity.GetType(), containerEntity.GetId()))
+			ec.Collect(fmt.Errorf("%s::%s::%s : Missing monitoring properties",
+				containerEntity.GetType(), containerEntity.GetId(), containerEntity.task.Name))
 			continue
 		}
 
@@ -197,6 +199,7 @@ func (monitor *DefaultMesosMonitor) setContainerMetrics(containerEntities map[st
 		memProvUsedKB = task.Resources.MemMB * data.KB_MULTIPLIER
 		setValue(containerEntity, &memProvUsedKB, MEM_PROV_USED, props, ec)
 	}
+	glog.Info("============== End setContainerMetrics =============")
 	return
 }
 
@@ -235,7 +238,7 @@ func (monitor *DefaultMesosMonitor) getAgentStats(agent *data.Agent, masterConf 
 	// Create the client for making rest api queries to the agent
 	agentConf := &conf.AgentConf{
 		AgentIP:   agent.IP,
-		AgentPort: agent.Port,
+		AgentPort: agent.PortNum,
 	}
 	agentClient := master.GetAgentRestClient(masterConf.Master, agentConf, masterConf)
 

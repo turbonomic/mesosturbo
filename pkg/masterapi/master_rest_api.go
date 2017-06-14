@@ -111,7 +111,7 @@ func (mesosRestClient *GenericMasterAPIClient) GetState() (*data.MesosAPIRespons
 	// Execute request
 	endpoint, _ := mesosRestClient.EndpointStore.EndpointMap[State]
 	request, err := createRequest(endpoint.EndpointPath,
-				mesosRestClient.MesosConf.MasterIP, mesosRestClient.MesosConf.MasterPort,
+				mesosRestClient.MesosConf.LeaderIP, mesosRestClient.MesosConf.LeaderPort,
 				mesosRestClient.MesosConf.Token)
 	if err != nil {
 		return nil, ErrorCreateRequest(MesosMasterAPIClientClass, err)
@@ -187,7 +187,7 @@ func executeAndValidateResponse(request *http.Request, logPrefix string) ([]byte
 
 func (mesosRestClient *GenericMasterAPIClient) createLoginRequest(endpoint string) (*http.Request, error) {
 	var jsonStr []byte
-	url := "http://" + mesosRestClient.MesosConf.MasterIP + endpoint
+	url := "http://" + mesosRestClient.MesosConf.LeaderIP + endpoint
 
 	// Send user and password
 	jsonStr = []byte(`{"uid":"` + mesosRestClient.MesosConf.MasterUsername + `","password":"` + mesosRestClient.MesosConf.MasterPassword + `"}`)
@@ -217,22 +217,21 @@ func (mesosRestClient *GenericMasterAPIClient) getDebugModeState() ([]byte, erro
 // ========================================= State Request Parser ===================================================
 
 type GenericMasterStateParser struct {
-	//Message *conf.MesosState
 	Message *data.MesosAPIResponse
 }
 
 const GenericMasterStateParserClass = "[GenericMasterStateParser]"
 
 func (parser *GenericMasterStateParser) parseResponse(resp []byte) error {
-	glog.V(3).Infof(GenericMasterStateParserClass + " in parseAPIStateResponse")
+	glog.V(3).Infof("%s in parseAPIStateResponse : %s", GenericMasterStateParserClass, resp)
 	if resp == nil {
 		return ErrorEmptyResponse(GenericMasterStateParserClass)
 	}
 
-	var jsonMesosMaster data.MesosAPIResponse //conf.MesosState
+	var jsonMesosMaster data.MesosAPIResponse
 	err := json.Unmarshal(resp, &jsonMesosMaster)
 	if err != nil {
-		return fmt.Errorf(GenericMasterStateParserClass + " Error in json unmarshal for state response : %s", err)
+		return fmt.Errorf(GenericMasterStateParserClass + " Error in json unmarshal for state response : %s %+v", err, err)
 	}
 	parser.Message = &jsonMesosMaster
 	return nil

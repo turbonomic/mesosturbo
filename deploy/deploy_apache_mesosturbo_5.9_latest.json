@@ -9,8 +9,7 @@
   },
   "args": [
     "--mesostype", "Apache Mesos",
-    "--masterip", "<MESOS-MASTER-IP>",
-    "--masterport", "<MESOS-MASTER-PORT>",
+    "--masteripport", "<MESOS-MASTER-IPPORT>",
     "--masteruser", "<MESOS-MASTER-USER>",
     "--masterpwd", "<MESOS-MASTER-PASSWORD>",
     "--turboserverurl", "http://<TURBO-OPERATIONS-MANAGER-IP>:80",
