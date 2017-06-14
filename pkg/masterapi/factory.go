@@ -10,7 +10,7 @@ import (
 // Interface for the client to handle Rest API communication with the Mesos Master
 type MasterRestClient interface {
 	Login() (string, error)
-	GetState() (*data.MesosAPIResponse, error)	//(*MesosState, error)
+	GetState() (*data.MesosAPIResponse, error)
 }
 
 // Interface for the client to handle Rest API communication with the Agent
@@ -19,7 +19,8 @@ type AgentRestClient interface {
 }
 
 // Get the Rest API client to handle communication with the Mesos Master
-func GetMasterRestClient(mesosType conf.MesosMasterType, mesosConf *conf.MesosTargetConf) MasterRestClient {
+// Returns the MasterRestClient for the supported specific Mesos vendor type, else nil
+func GetMasterRestClient(mesosType conf.MesosMasterType, masterConf *conf.MasterConf) MasterRestClient {
 	var endpointStore *MasterEndpointStore
 	if mesosType == conf.Apache {
 		glog.V(2).Infof("[GetMasterRestClient] Creating Apache Mesos Master Client")
@@ -34,11 +35,12 @@ func GetMasterRestClient(mesosType conf.MesosMasterType, mesosConf *conf.MesosTa
 		return nil
 	}
 
-	return NewGenericMasterAPIClient(mesosConf, endpointStore)
+	return NewGenericMasterAPIClient(masterConf, endpointStore)
 }
 
 // Get the Rest API client to handle communication with the Agent
-func GetAgentRestClient(mesosType conf.MesosMasterType, agentConf *conf.AgentConf, mesosConf *conf.MesosTargetConf) AgentRestClient {
+// Returns the AgentRestClient for the supported specific Mesos vendor type, else nil
+func GetAgentRestClient(mesosType conf.MesosMasterType, agentConf *conf.AgentConf, masterConf *conf.MasterConf) AgentRestClient {
 	var endpointStore *AgentEndpointStore
 	if mesosType == conf.Apache {
 		glog.V(2).Infof("[GetAgentRestClient] Creating Apache Agent Client")
@@ -53,7 +55,7 @@ func GetAgentRestClient(mesosType conf.MesosMasterType, agentConf *conf.AgentCon
 		return nil
 	}
 
-	return NewGenericAgentAPIClient(agentConf, mesosConf, endpointStore)
+	return NewGenericAgentAPIClient(agentConf, masterConf, endpointStore)
 }
 
 

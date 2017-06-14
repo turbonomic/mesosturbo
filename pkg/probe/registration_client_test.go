@@ -87,7 +87,7 @@ func TestIdentifyingField(t *testing.T) {
 	masters = append(masters, conf.Apache)
 	masters = append(masters, conf.DCOS)
 
-	idField := conf.MasterIP
+	idField := conf.MasterIPPort
 	for _, masterType := range masters {
 		client := NewRegistrationClient(masterType)
 		assert.Equal(t, string(idField), client.GetIdentifyingFields())
@@ -113,9 +113,8 @@ func TestIdentifyingFieldInMesosAcctMap(t *testing.T) {
 func TestApacheMesosAccountMap(t *testing.T) {
 	client := NewRegistrationClient(conf.Apache)
 
-	expectedFields := [...]string {client.GetIdentifyingFields(), string(conf.MasterIP), string(conf.MasterPort),
-						string(conf.MasterUsername), string(conf.MasterPassword),
-					string(conf.FrameworkIP), string(conf.FrameworkPort)}
+	expectedFields := [...]string {client.GetIdentifyingFields(), string(conf.MasterIPPort),
+						string(conf.MasterUsername), string(conf.MasterPassword)}
 
 	var acctDefEntryMap map[string]*proto.AccountDefEntry
 	acctDefEntryMap = make(map[string]*proto.AccountDefEntry)
@@ -134,7 +133,7 @@ func TestApacheMesosAccountMap(t *testing.T) {
 func TestDCOSMesosAccountMap(t *testing.T) {
 	client := NewRegistrationClient(conf.DCOS)
 
-	expectedFields := [...]string {client.GetIdentifyingFields(), string(conf.MasterIP), string(conf.MasterPort),
+	expectedFields := [...]string {client.GetIdentifyingFields(), string(conf.MasterIPPort),
 		string(conf.MasterUsername), string(conf.MasterPassword)}
 	absentFields := [...]string {string(conf.FrameworkIP), string(conf.FrameworkPort)}
 

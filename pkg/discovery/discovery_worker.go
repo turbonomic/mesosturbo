@@ -27,7 +27,7 @@ type AgentTaskResponse struct {
 // Implementation for a Mesos Agent
 type MesosAgentTask struct {
 	node *data.Agent
-	masterConf     *conf.MesosTargetConf
+	masterConf     *conf.MasterConf
 	metricsStore 	*MesosMetricsMetadataStore
 	rawStatsCache 	*RawStatsCache
 }
@@ -65,7 +65,9 @@ func(agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
 	defaultMonitor := &DefaultMesosMonitor{}
 	errors := defaultMonitor.Monitor(monitorTarget)
 	ec.Collect(errors)
-	glog.Errorf("%s : Monitor errors %s\n", node.IP, errors)
+	if ec.Count() > 1 {
+		glog.Errorf("%s : Monitor errors %s\n", node.IP, errors)
+	}
 
 	//PrintRepository(nodeRepository)
 
@@ -126,7 +128,7 @@ type DiscoveryWorkerResponse []*AgentTaskResponse
 type DiscoveryWorker struct {
 	name string
 	// complete mesos master state and config
-	masterConf     *conf.MesosTargetConf
+	masterConf     *conf.MasterConf
 	// subset of a agent map from the mesos master state
 	nodeList 	[]*data.Agent
 	nodeResponseQueue	chan *AgentTaskResponse //TODO: change to dto queue
@@ -136,7 +138,7 @@ type DiscoveryWorker struct {
 }
 
 // Discovery worker for set of nodes grouped by certain criterion to distribute discovery
-func NewDiscoveryWorker (masterConf *conf.MesosTargetConf, nodeList []*data.Agent, rawStatsCache *RawStatsCache) *DiscoveryWorker {
+func NewDiscoveryWorker (masterConf *conf.MasterConf, nodeList []*data.Agent, rawStatsCache *RawStatsCache) *DiscoveryWorker {
 	if nodeList == nil || len(nodeList) == 0 {
 		glog.Errorf("No agents specified for discovery worker")
 		return nil
@@ -170,8 +172,8 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 		wg.Add(1)
 		go func(idx int) {
 			node := worker.nodeList[idx]
-			fmt.Printf("%s : Begin Process Agent %d::%s\n", worker.name, idx, node.IP)
-			glog.Infof("%s: Begin Process Agent %d::%s", worker.name, idx, node.Id)
+			//fmt.Printf("%s : Begin Process Agent %d::%s\n", worker.name, idx, node.IP)
+			glog.V(2).Infof("%s: Begin Process Agent %d::%s", worker.name, idx, node.Id)
 			agentTask := &MesosAgentTask{
 				node: node,
 				masterConf: worker.masterConf,
@@ -182,8 +184,8 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 
 			//workerRepos[idx] = nodeResponse
 			worker.nodeResponseQueue <- nodeResponse //send it on the channel/queue
-			fmt.Printf("%s : End Process Agent %d::%s, num of tasks: %d\n",  worker.name, idx, node.IP, len(nodeResponse.nodeRepository.taskEntities))
-			glog.Infof("%s : End Process Agent %d::%s, num of tasks: %d",  worker.name, idx, node.Id, len(nodeResponse.nodeRepository.taskEntities))
+			//fmt.Printf("%s : End Process Agent %d::%s, num of tasks: %d\n",  worker.name, idx, node.IP, len(nodeResponse.nodeRepository.taskEntities))
+			glog.V(2).Infof("%s : End Process Agent %d::%s, num of tasks: %d",  worker.name, idx, node.Id, len(nodeResponse.nodeRepository.taskEntities))
 		}(idx)
 	}
 	go func() {
@@ -194,7 +196,7 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 	}()
 
 	wg.Wait()
-	fmt.Printf("%s : Done all agent tasks\n", worker.name)
+	//glog.V(3).Infof("%s : Done all agent tasks\n", worker.name)
 	return DiscoveryWorkerResponse(agentTaskResponseList)
 }
 
