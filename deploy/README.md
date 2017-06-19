@@ -3,7 +3,7 @@ Once deployed, the Mesosturbo service enables you to give Turbonomic visibility 
 
 ### Prerequisites
 * Turbonomic 5.9+
-* Running Mesos Apache 1.2 or Mesosphere DCOS 1.8
+* Running Mesos Apache 0.28 or later or Mesosphere DCOS 1.8
 
 ### Step One: Deploying the Mesosturbo Docker Container Image
 > NOTE: Ensure that the Turbonomic Mesosturbo container image on DockerHub is accessible to the Marathon service in the Mesos Cluster.
