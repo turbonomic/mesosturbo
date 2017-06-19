@@ -25,7 +25,8 @@ A copy of the deploy config can be downloaded from [here](deploy_dcos_mesosturbo
   "id": "mesosturbo",
   "container": {
     "docker": {
-      "image": "vmturbo/mesosturbo:5.9.0"
+      "image": "vmturbo/mesosturbo:5.9.0",
+       "forcePullImage": true
     },
     "type": "DOCKER",
     "volumes": []
@@ -62,7 +63,8 @@ A copy of the deploy config can be downloaded from [here](deploy_apache_mesostur
   "id": "mesosturbo",
   "container": {
     "docker": {
-      "image": "vmturbo/mesosturbo:5.9.0"
+      "image": "vmturbo/mesosturbo:5.9.0",
+       "forcePullImage": true
     },
     "type": "DOCKER",
     "volumes": []
