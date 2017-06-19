@@ -1,16 +1,32 @@
 package data
 
+
 type MesosAPIResponse struct {
 	Leader      string `json:"leader"`
+	LeaderInfo Leader `json:"leader_info"`
+	//LeaderInfo struct {
+	//		   Id string `json:"id"`
+	//		   Pid string `json:"pid"`
+	//		   Port  int `json:"port"`
+	//		   Hostname string `json:"hostname"`
+	//       } `json:"leader_info"`
 	Version     string `json:"version"`
 	Id          string `json:"id"`
 	ClusterName string `json:"cluster"`
-
-	ActivatedSlaves   float64     `json:"activated_slaves"`
-	DeActivatedSlaves float64     `json:"deactivated_slaves"`
+	Pid 	string `json:"pid"`
+	//ActivatedSlaves   float64     `json:"activated_slaves"`
+	//DeActivatedSlaves float64     `json:"deactivated_slaves"`
 	Agents            []Agent     `json:"slaves"`
 	Frameworks        []Framework `json:"frameworks"`
 }
+
+type Leader struct {
+	Id string `json:"id"`
+	Pid string `json:"pid"`
+	Port  int `json:"port"`
+	Hostname string `json:"hostname"`
+}
+
 type Agent struct {
 	Id               string    `json:"id"`
 	Pid              string    `json:"pid"`
@@ -21,12 +37,12 @@ type Agent struct {
 	Name             string    `json:"hostname"`
 	//Calculated       CalculatedUse
 	//Attributes       Attributes `json:"attributes"`
-	Active  bool   `json:"active"`
-	Version string `json:"version"`
+	Active           bool   `json:"active"`
+	Version          string `json:"version"`
 	// -------- Computed parameters
-	ClusterName string
+	ClusterName      string
 	IP               string // parsed ip for the Slave
-	Port             string
+	PortNum          string
 	ResourceUseStats *CalculatedUse
 	TaskMap          map[string]*Task
 }

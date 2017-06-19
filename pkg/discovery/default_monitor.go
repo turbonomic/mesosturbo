@@ -23,26 +23,30 @@ func (monitor *DefaultMesosMonitor) GetSourceName() MONITOR_NAME {
 func (monitor *DefaultMesosMonitor) Monitor(target *MonitorTarget) error {
 	// Monitoring related
 	if target == nil || target.config == nil {
-		glog.Errorf("%s: Invalid target for monitor %s", monitor.GetSourceName(), target)
-		return fmt.Errorf("%s: Invalid target for monitor %s", monitor.GetSourceName(), target)
+		nerr := fmt.Errorf("%s: Invalid target for monitor %s", monitor.GetSourceName(), target)
+		glog.Errorf("%s", nerr.Error())
+		return nerr
 	}
 	var nodeRepository *NodeRepository
 	nodeRepository, ok := target.repository.(*NodeRepository)
 	if !ok {
-		glog.Errorf("%s: Invalid repository for monitor %s", monitor.GetSourceName(), target.targetId)
-		return fmt.Errorf("%s: Invalid repository for monitor %s", monitor.GetSourceName(), target.targetId)
+		nerr := fmt.Errorf("%s: Invalid repository for monitor %s", monitor.GetSourceName(), target.targetId)
+		glog.Errorf("%s", nerr.Error())
+		return nerr
 	}
 
-	var masterConf *conf.MesosTargetConf
-	masterConf, ok = target.config.(*conf.MesosTargetConf)
+	var masterConf *conf.MasterConf
+	masterConf, ok = target.config.(*conf.MasterConf)
 	if !ok {
-		glog.Errorf("Invalid mesos target conf %s", target.config)
-		return fmt.Errorf("Invalid mesos target conf %s", target.config)
+		nerr := fmt.Errorf("Invalid mesos target conf %s", target.config)
+		glog.Errorf("%s", nerr.Error())
+		return nerr
 	}
 
 	if target.monitoringProps == nil {
-		glog.Errorf("Monitoring properties not specified for the target %s", target.targetId)
-		return fmt.Errorf("Monitoring properties not specified for the target %s", target.targetId)
+		nerr := fmt.Errorf("Monitoring properties not specified for the target %s", target.targetId)
+		glog.Errorf("%s", nerr.Error())
+		return nerr
 	}
 
 	// Get the stats from each agent and parse and save in the Agent and Task objects
@@ -51,14 +55,16 @@ func (monitor *DefaultMesosMonitor) Monitor(target *MonitorTarget) error {
 	arrOfExec, err := monitor.getAgentStats(agent, masterConf)
 	glog.V(3).Infof("Parsed executors %s\n", arrOfExec)
 	if err != nil {
-		glog.Errorf("Error obtaining metrics from the agent %s::%s : %s", agent.IP, agent.Port, err)
-		return fmt.Errorf("Error obtaining metrics from the agent %s::%s", agent.IP, agent.Port)
+		nerr := fmt.Errorf("Error obtaining metrics from the agent %s::%s", agent.IP, agent.PortNum)
+		glog.Errorf("%s:%s", nerr.Error(), err)
+		return nerr
 	}
 
 	err = monitor.parseAgentUsedStats(agent, arrOfExec, target.rawStatsCache)
 	if err != nil {
-		glog.Errorf("Error parsing metrics from the agent %s::%s : %s", agent.IP, agent.Port, err)
-		return fmt.Errorf("Error parsing metrics from the agent %s::%s", agent.IP, agent.Port)
+		nerr := fmt.Errorf("Error parsing metrics from the agent %s::%s", agent.IP, agent.PortNum)
+		glog.Errorf("%s:%s", nerr.Error(), err)
+		return nerr
 	}
 
 	// And then compute the metric values for the specified metrics and invoke the metric setter to set it in the entity
@@ -164,7 +170,8 @@ func (monitor *DefaultMesosMonitor) setContainerMetrics(containerEntities map[st
 		var props *EntityMonitoringProps
 		props, exists := monitoringProps[ENTITY_ID(containerEntity.GetId())]
 		if !exists {
-			ec.Collect(fmt.Errorf("%s::%s : Missing monitoring properties", containerEntity.GetType(), containerEntity.GetId()))
+			ec.Collect(fmt.Errorf("%s::%s::%s : Missing monitoring properties",
+				containerEntity.GetType(), containerEntity.GetId(), containerEntity.task.Name))
 			continue
 		}
 
@@ -231,11 +238,11 @@ func setValue(entity MesosEntity, value *float64, propKey PropKey, props *Entity
 // Get the data containing the monitoring statistics for the specified agent.
 // Create the rest api client for querying the agent and execute the stats query.
 //
-func (monitor *DefaultMesosMonitor) getAgentStats(agent *data.Agent, masterConf *conf.MesosTargetConf) ([]data.Executor, error) {
+func (monitor *DefaultMesosMonitor) getAgentStats(agent *data.Agent, masterConf *conf.MasterConf) ([]data.Executor, error) {
 	// Create the client for making rest api queries to the agent
 	agentConf := &conf.AgentConf{
 		AgentIP:   agent.IP,
-		AgentPort: agent.Port,
+		AgentPort: agent.PortNum,
 	}
 	agentClient := master.GetAgentRestClient(masterConf.Master, agentConf, masterConf)
 
@@ -328,7 +335,7 @@ func (monitor *DefaultMesosMonitor) parseAgentUsedStats(agent *data.Agent, arrOf
 		task.Resources.CPUUnits = currStats.CPUsLimit
 		//task.Resources.Disk = currStats.DiskLimitBytes / float64(1024.00*1024.00)
 
-		glog.Infof("%s::%s : Task resource stats: [capacity %+v] [usage %+v]\n", agent.IP, task.Name, task.Resources, task.ResourceUseStats)
+		glog.V(3).Infof("%s::%s : Task resource stats: [capacity %+v] [usage %+v]\n", agent.IP, task.Name, task.Resources, task.ResourceUseStats)
 
 	} // task loop
 	//fmt.Printf("Agent resource stats: [capacity %+v] [usage %+v]\n", agent.Resources, agent.ResourceUseStats)

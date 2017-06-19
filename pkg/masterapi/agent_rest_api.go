@@ -29,8 +29,9 @@ type AgentEndpointStore struct {
 // ==========================================================================
 // Represents the generic client used to connect to a Agent
 type GenericAgentAPIClient struct {
-	MasterConf *conf.MesosTargetConf
-	// Mesos target configuration
+	// Master service configuration
+	MasterConf    *conf.MasterConf
+	// Mesos Agent configuration
 	AgentConf     *conf.AgentConf
 	// Endpoint store with the endpoint paths for different rest api calls
 	EndpointStore *AgentEndpointStore
@@ -42,9 +43,9 @@ type GenericAgentAPIClient struct {
 // Create a new instance of the GenericMasterAPIClient
 // @param AgentConf the conf.AgentConf that contains the configuration information for the Agent
 // @param epStore    the Endpoint store containing the Rest API endpoints for the Agent
-func NewGenericAgentAPIClient(agentConf *conf.AgentConf, mesosConf *conf.MesosTargetConf, epStore *AgentEndpointStore) *GenericAgentAPIClient{
+func NewGenericAgentAPIClient(agentConf *conf.AgentConf, masterConf *conf.MasterConf, epStore *AgentEndpointStore) *GenericAgentAPIClient{
 	return &GenericAgentAPIClient{
-		MasterConf: mesosConf,
+		MasterConf: masterConf,
 		AgentConf:     agentConf,
 		EndpointStore: epStore,
 	}
@@ -58,7 +59,7 @@ func (agentRestClient *GenericAgentAPIClient) GetStats() ([]data.Executor, error
 	// Execute request
 	endpoint, _ := agentRestClient.EndpointStore.EndpointMap[Stats]
 	request, err := createRequest(endpoint.EndpointPath,
-					agentRestClient.AgentConf.AgentIP,  agentRestClient.AgentConf.AgentPort,
+					agentRestClient.AgentConf.AgentIP, string(agentRestClient.AgentConf.AgentPort),
 					agentRestClient.MasterConf.Token)
 	if err != nil {
 		return nil, ErrorCreateRequest(AgentAPIClientClass, err)

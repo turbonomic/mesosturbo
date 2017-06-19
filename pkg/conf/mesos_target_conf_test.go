@@ -14,21 +14,19 @@ func TestEmptyConfig(t *testing.T) {
 	assert.Equal(t, false, bool, fmt.Sprintf("Validation should fail for empty config : %s", err))
 }
 
-func TestMissingMasterIP(t *testing.T) {
+func TestMissingMasterIPPort(t *testing.T) {
 	conf := &MesosTargetConf{
-		MasterPort:     "8080",
 		MasterUsername: "user",
 		MasterPassword: "pwd",
 	}
 	bool, err := conf.validate()
 
-	assert.Equal(t, false, bool, fmt.Sprintf("Validation should fail for empty MasterIP : %s", err))
+	assert.Equal(t, false, bool, fmt.Sprintf("Validation should fail for empty MasterIPPort : %s", err))
 }
 
 func TestMissingMasterType(t *testing.T) {
 	conf := &MesosTargetConf{
-		MasterIP:       "127.0.0.1",
-		MasterPort:     "8080",
+		MasterIPPort:       "127.0.0.1:5050",
 		MasterUsername: "user",
 		MasterPassword: "pwd",
 	}
@@ -42,8 +40,7 @@ func TestMissingMasterType(t *testing.T) {
 func TestGetAccountFields(t *testing.T) {
 	conf := &MesosTargetConf{
 		Master:         Apache,
-		MasterIP:       "127.0.0.1",
-		MasterPort:     "8080",
+		MasterIPPort:       "127.0.0.1:5050",
 		MasterUsername: "user",
 		MasterPassword: "pwd",
 	}
@@ -56,8 +53,7 @@ func TestGetAccountFields(t *testing.T) {
 		acctValuesMap[acctVal.GetKey()] = acctVal
 	}
 
-	checkAccountValueField(t, acctValuesMap[string(MasterIP)], string(MasterIP), conf.MasterIP)
-	checkAccountValueField(t, acctValuesMap[string(MasterPort)], string(MasterPort), conf.MasterPort)
+	checkAccountValueField(t, acctValuesMap[string(MasterIPPort)], string(MasterIPPort), conf.MasterIPPort)
 	checkAccountValueField(t, acctValuesMap[string(MasterUsername)], string(MasterUsername), conf.MasterUsername)
 	checkAccountValueField(t, acctValuesMap[string(MasterPassword)], string(MasterPassword), conf.MasterPassword)
 }
@@ -79,19 +75,11 @@ func TestCreateMesosTargetConf(t *testing.T) {
 
 func createApacheAccValues() []*proto.AccountValue {
 	var accountValues []*proto.AccountValue
-	prop1 := string(MasterIP)
-	val1 := "10.10.10.10"
+	prop1 := string(MasterIPPort)
+	val1 := "10.10.10.10:5050"
 	accVal := &proto.AccountValue{
 		Key:         &prop1,
 		StringValue: &val1,
-	}
-	accountValues = append(accountValues, accVal)
-
-	prop2 := string(MasterPort)
-	val2 := "5050"
-	accVal = &proto.AccountValue{
-		Key:         &prop2,
-		StringValue: &val2,
 	}
 	accountValues = append(accountValues, accVal)
 

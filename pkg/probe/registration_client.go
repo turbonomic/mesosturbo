@@ -131,7 +131,7 @@ func (registrationClient *MesosRegistrationClient) GetSupplyChainDefinition() []
 }
 
 func (registrationClient *MesosRegistrationClient) GetIdentifyingFields() string {
-	return string(conf.MasterIP)
+	return string(conf.MasterIPPort)
 }
 
 // The return type is a list of ProbeInfo_AccountDefProp.
@@ -140,19 +140,12 @@ func (registrationClient *MesosRegistrationClient) GetIdentifyingFields() string
 func (registrationClient *MesosRegistrationClient) GetAccountDefinition() []*proto.AccountDefEntry {
 	var acctDefProps []*proto.AccountDefEntry
 
-	// master ip
-	targetIDAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.MasterIP), string(conf.MasterIP),
-		"IP of the mesos master", ".*",
+	// master ip port list
+	masterIPListAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.MasterIPPort), string(conf.MasterIPPort),
+		"Comma separated list of `host:port` for each Mesos Master in the cluster", ".*",
 		true, false).
 		Create()
-	acctDefProps = append(acctDefProps, targetIDAcctDefEntry)
-
-	// master port
-	masterPortAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.MasterPort), string(conf.MasterPort),
-		"Port of the mesos master", ".*",
-		false, false).
-		Create()
-	acctDefProps = append(acctDefProps, masterPortAcctDefEntry)
+	acctDefProps = append(acctDefProps, masterIPListAcctDefEntry)
 
 	// username
 	usernameAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.MasterUsername), string(conf.MasterUsername),
@@ -167,49 +160,6 @@ func (registrationClient *MesosRegistrationClient) GetAccountDefinition() []*pro
 		false, true).
 		Create()
 	acctDefProps = append(acctDefProps, passwdAcctDefEntry)
-
-	if registrationClient.mesosMasterType == conf.Apache {
-		// framework id
-		frameworkIpAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.FrameworkIP), string(conf.FrameworkIP),
-			"IP for the Framework", ".*",
-			false, false).
-			Create()
-		acctDefProps = append(acctDefProps, frameworkIpAcctDefEntry)
-
-		// framework port
-		frameworkPortAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.FrameworkPort), string(conf.FrameworkPort),
-			"Port for the Framework", ".*",
-			false, false).
-			Create()
-		acctDefProps = append(acctDefProps, frameworkPortAcctDefEntry)
-
-		// username
-		frameworkUserAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.FrameworkUsername), string(conf.FrameworkUsername),
-			"Username for the framework", ".*",
-			false, false).
-			Create()
-		acctDefProps = append(acctDefProps, frameworkUserAcctDefEntry)
-
-		// password
-		frameworkPwdAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.FrameworkPassword), string(conf.FrameworkPassword),
-			"Password for the framework", ".*",
-			false, true).
-			Create()
-		acctDefProps = append(acctDefProps, frameworkPwdAcctDefEntry)
-	}
-
-	// action ip
-	actionIPAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.ActionIP), string(conf.ActionIP),
-		"IP of the action executor framework", ".*",
-		false, false).
-		Create()
-	acctDefProps = append(acctDefProps, actionIPAcctDefEntry)
-	// action port
-	actionPortAcctDefEntry := builder.NewAccountDefEntryBuilder(string(conf.ActionPort), string(conf.ActionPort),
-		"Port of the action executor framework", ".*",
-		false, false).
-		Create()
-	acctDefProps = append(acctDefProps, actionPortAcctDefEntry)
 
 	return acctDefProps
 }

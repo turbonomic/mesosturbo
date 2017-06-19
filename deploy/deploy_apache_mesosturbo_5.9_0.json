@@ -2,17 +2,14 @@
   "id": "mesosturbo",
   "container": {
     "docker": {
-      "image": "vmturbo/mesosturbo:5.9-latest"
+      "image": "vmturbo/mesosturbo:5.9.0"
     },
     "type": "DOCKER",
     "volumes": []
   },
   "args": [
     "--mesostype", "Apache Mesos",
-    "--masterip", "<MESOS-MASTER-IP>",
-    "--masterport", "<MESOS-MASTER-PORT>",
-    "--masteruser", "<MESOS-MASTER-USER>",
-    "--masterpwd", "<MESOS-MASTER-PASSWORD>",
+    "--masteripport", "<MESOS-MASTER-IPPORT>",
     "--turboserverurl", "http://<TURBO-OPERATIONS-MANAGER-IP>:80",
     "--opsmanagerusername", "<TURBO-OPERATIONS-MANAGER-ADMIN-USERNAME>",
     "--opsmanagerpassword", "<TURBO-OPERATIONS-MANAGER-ADMIN-PASSWORD>"

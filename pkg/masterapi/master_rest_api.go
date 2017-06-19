@@ -48,20 +48,22 @@ type EndpointParser interface {
 // Represents the generic client used to connect to a Mesos Master. Implements the MasterRestClient interface
 type GenericMasterAPIClient struct {
 	// Mesos target configuration
-	MesosConf     *conf.MesosTargetConf
+	//TargetConf    *conf.MesosTargetConf
+	// Master service configuration
+	MasterConf    *conf.MasterConf
 	// Endpoint store with the endpoint paths for different rest api calls
 	EndpointStore *MasterEndpointStore
 
-	DebugMode 	bool
-	DebugProps     map[string]string
+	DebugMode     bool
+	DebugProps    map[string]string
 }
 
 // Create a new instance of the GenericMasterAPIClient
 // @param mesosConf the conf.MesosTargetConf that contains the configuration information for the Mesos Target
 // @param epStore    the Endpoint store containing the Rest API endpoints for the Mesos Master
-func NewGenericMasterAPIClient(mesosConf *conf.MesosTargetConf, epStore *MasterEndpointStore) MasterRestClient {
+func NewGenericMasterAPIClient(masterConf *conf.MasterConf, epStore *MasterEndpointStore) MasterRestClient {
 	return &GenericMasterAPIClient{
-		MesosConf:     mesosConf,
+		MasterConf:     masterConf,
 		EndpointStore: epStore,
 	}
 }
@@ -69,28 +71,30 @@ func NewGenericMasterAPIClient(mesosConf *conf.MesosTargetConf, epStore *MasterE
 const MesosMasterAPIClientClass = "MesosMasterAPIClient"
 
 // Handle login to the Mesos Client using the path specified for the MasterEndpointName.Login endpoint
+// Returns the login token if successful, else error
 func (mesosRestClient *GenericMasterAPIClient) Login() (string, error) {
 	glog.V(3).Infof("[GenericMasterAPIClient] Login ...")
 
 	// Execute request
 	endpoint, _ := mesosRestClient.EndpointStore.EndpointMap[Login]
 
+	// Apache Mesos does not have a login endpoint
 	if endpoint == nil {
 		return "", nil
 	}
-	request, err := mesosRestClient.createLoginRequest(endpoint.EndpointPath)
 
+	request, err := mesosRestClient.createLoginRequest(endpoint.EndpointPath)
 	if err != nil {
 		return "", ErrorCreateRequest(MesosMasterAPIClientClass, err)
 	}
-	glog.V(3).Infof(MesosMasterAPIClientClass +  " : send Login() request : ", request)
+	glog.Infof(MesosMasterAPIClientClass +  " : send Login() request : ", request)
 	var byteContent []byte
-	byteContent, err = executeAndValidateResponse(request, MesosMasterAPIClientClass)
+	byteContent, err = executeAndValidateResponse(request, MesosMasterAPIClientClass + ":Login()")
 	if err != nil {
-		return "", fmt.Errorf(MesosMasterAPIClientClass + " : Login() error :  %s", err)
+		return "", fmt.Errorf("Login() : %s", err)
 	}
 
-	// Parse response
+	// Parse response and extract the login token
 	parser := endpoint.Parser
 	err = parser.parseResponse(byteContent)
 	if err != nil {
@@ -100,35 +104,37 @@ func (mesosRestClient *GenericMasterAPIClient) Login() (string, error) {
 	msg := parser.GetMessage()
 	st, ok := msg.(string)
 	if ok {
+		mesosRestClient.MasterConf.Token = st
 		return st, nil
 	}
 	return "", ErrorConvertResponse(MesosMasterAPIClientClass, err)
 }
 
 // Make a RestAPI call to get the Mesos State using the path specified for the MasterEndpointName.Login endpoint
+// Returns the state as MesosAPIResponse object if successful, else error
 func (mesosRestClient *GenericMasterAPIClient) GetState() (*data.MesosAPIResponse, error) {
 	glog.V(3).Infof("[GenericMasterAPIClient] Get State ...")
 	// Execute request
 	endpoint, _ := mesosRestClient.EndpointStore.EndpointMap[State]
 	request, err := createRequest(endpoint.EndpointPath,
-				mesosRestClient.MesosConf.MasterIP, mesosRestClient.MesosConf.MasterPort,
-				mesosRestClient.MesosConf.Token)
+				mesosRestClient.MasterConf.MasterIP, mesosRestClient.MasterConf.MasterPort,
+				mesosRestClient.MasterConf.Token)
 	if err != nil {
 		return nil, ErrorCreateRequest(MesosMasterAPIClientClass, err)
 	}
 	glog.V(3).Infof(MesosMasterAPIClientClass +  " : send GetState() request %s ", request)
 
 	var byteContent []byte
-	if mesosRestClient.DebugMode { // Debug mode
+	if mesosRestClient.DebugMode { // Debug mode will read response from a file
 		byteContent, err = mesosRestClient.getDebugModeState()
 	} else { // Execute Request
-		byteContent, err = executeAndValidateResponse(request, MesosMasterAPIClientClass)
+		byteContent, err = executeAndValidateResponse(request, MesosMasterAPIClientClass+":GetState()")
 	}
 	if err != nil {
-		return nil, fmt.Errorf(MesosMasterAPIClientClass + " : GetState() error :  %s", err)
+		return nil, fmt.Errorf("%s", err)
 	}
 
-	// Parse response
+	// Parse response to get the master state represented as MesosAPIResponse
 	parser := endpoint.Parser
 	err = parser.parseResponse(byteContent)
 	if err != nil {
@@ -153,6 +159,7 @@ func createRequest(endpoint, ip, port, token string) (*http.Request, error) {
 	if token != "" {
 		req.Header.Add("Authorization", "token="+token)
 	}
+	glog.V(3).Infof("Created Request %s\n", req)
 	return req, nil
 }
 
@@ -187,10 +194,12 @@ func executeAndValidateResponse(request *http.Request, logPrefix string) ([]byte
 
 func (mesosRestClient *GenericMasterAPIClient) createLoginRequest(endpoint string) (*http.Request, error) {
 	var jsonStr []byte
-	url := "http://" + mesosRestClient.MesosConf.MasterIP + endpoint
+	url := "http://" + mesosRestClient.MasterConf.MasterIP + endpoint
 
 	// Send user and password
-	jsonStr = []byte(`{"uid":"` + mesosRestClient.MesosConf.MasterUsername + `","password":"` + mesosRestClient.MesosConf.MasterPassword + `"}`)
+	data := map[string]string {"uid": mesosRestClient.MasterConf.MasterUsername, "password": mesosRestClient.MasterConf.MasterPassword}
+	jsonStr, _= json.Marshal(data)
+	//jsonStr = []byte(`{"uid":"` + mesosRestClient.MasterConf.MasterUsername + `","password":"` + mesosRestClient.MasterConf.MasterPassword + `"}`)
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
@@ -217,22 +226,21 @@ func (mesosRestClient *GenericMasterAPIClient) getDebugModeState() ([]byte, erro
 // ========================================= State Request Parser ===================================================
 
 type GenericMasterStateParser struct {
-	//Message *conf.MesosState
 	Message *data.MesosAPIResponse
 }
 
 const GenericMasterStateParserClass = "[GenericMasterStateParser]"
 
 func (parser *GenericMasterStateParser) parseResponse(resp []byte) error {
-	glog.V(3).Infof(GenericMasterStateParserClass + " in parseAPIStateResponse")
+	glog.V(3).Infof("%s in parseAPIStateResponse : %s", GenericMasterStateParserClass, resp)
 	if resp == nil {
 		return ErrorEmptyResponse(GenericMasterStateParserClass)
 	}
 
-	var jsonMesosMaster data.MesosAPIResponse //conf.MesosState
+	var jsonMesosMaster data.MesosAPIResponse
 	err := json.Unmarshal(resp, &jsonMesosMaster)
 	if err != nil {
-		return fmt.Errorf(GenericMasterStateParserClass + " Error in json unmarshal for state response : %s", err)
+		return fmt.Errorf(GenericMasterStateParserClass + " Error in json unmarshal for state response : %s %+v", err, err)
 	}
 	parser.Message = &jsonMesosMaster
 	return nil

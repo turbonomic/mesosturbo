@@ -1,7 +1,6 @@
 package discovery
 
 import (
-	"errors"
 	"github.com/golang/glog"
 
 	"github.com/turbonomic/turbo-go-sdk/pkg/probe"
@@ -9,7 +8,6 @@ import (
 
 	"fmt"
 	"github.com/turbonomic/mesosturbo/pkg/conf"
-	"github.com/turbonomic/mesosturbo/pkg/masterapi"
 	"github.com/turbonomic/mesosturbo/pkg/data"
 	"strings"
 	"sync"
@@ -22,15 +20,14 @@ const (
 // Discovery Client for the Mesos Probe
 // Implements the TurboDiscoveryClient interface
 type MesosDiscoveryClient struct {
-	mesosMasterType     conf.MesosMasterType
-	clientConf          *conf.MesosTargetConf
-	masterRestClient    master.MasterRestClient
+	targetConf          *conf.MesosTargetConf //  target configuration
+	MesosLeader         *MesosLeader          // discovered leader and its configuration
 
-	// Map of targetId and Mesos Master
-	metricsStore 	*MesosMetricsMetadataStore
-	mesosMaster	*data.MesosMaster
+						  // Map of targetId and Mesos Master
+	metricsStore        *MesosMetricsMetadataStore
+	mesosMaster         *data.MesosMaster
 	prevCycleStatsCache *RawStatsCache
-	agentList []*data.Agent
+	agentList           []*data.Agent
 }
 
 type SelectionStrategy string
@@ -71,7 +68,7 @@ func (discoveryClient *MesosDiscoveryClient) CreateDiscoveryWorker(st SelectionS
 	workerGroup = make([]*DiscoveryWorker, 0, len(agentGroups))
 	for i, _ := range agentGroups {
 		agentList := agentGroups[i]
-		discoveryWorker := NewDiscoveryWorker(discoveryClient.clientConf, agentList, discoveryClient.prevCycleStatsCache)
+		discoveryWorker := NewDiscoveryWorker(discoveryClient.MesosLeader.leaderConf, agentList, discoveryClient.prevCycleStatsCache)
 		name := fmt.Sprintf("DW-%d", i)
 		fmt.Println("name=", name)
 		discoveryWorker.SetName(name)
@@ -81,60 +78,38 @@ func (discoveryClient *MesosDiscoveryClient) CreateDiscoveryWorker(st SelectionS
 }
 
 
-func NewDiscoveryClient(mesosMasterType conf.MesosMasterType, clientConf *conf.MesosTargetConf) (probe.TurboDiscoveryClient, error) {
-	if clientConf == nil {
-		return nil, fmt.Errorf("[MesosDiscoveryClient] Null config")
+func NewDiscoveryClient(mesosMasterType conf.MesosMasterType, targetConf *conf.MesosTargetConf) (probe.TurboDiscoveryClient, error) {
+	if targetConf == nil {
+		return nil, fmt.Errorf("[MesosDiscoveryClient] Null target config")
 	}
+	glog.V(2).Infof("[MesosDiscoveryClient] Target Conf ", targetConf)
 
-	glog.V(2).Infof("[MesosDiscoveryClient] Target Conf ", clientConf)
-
-	client := &MesosDiscoveryClient{
-		mesosMasterType: mesosMasterType,
-		clientConf:      clientConf,
-		prevCycleStatsCache: &RawStatsCache{},
-	}
-
-	// Init the discovery client by logging to the target
-	err := client.initDiscoveryClient()
+	// Create the MesosLeader to detect the leader IP to make Rest API calls during discovery and validation
+	mesosLeader, err := NewMesosLeader(targetConf)
 	if err != nil {
 		return nil, fmt.Errorf("Error while creating new MesosDiscoveryClient: %s", err)
 	}
+
+	client := &MesosDiscoveryClient{
+		targetConf:      targetConf,
+		prevCycleStatsCache: &RawStatsCache{},
+		MesosLeader: mesosLeader,
+	}
+
 	// Monitoring metadata
 	client.metricsStore = NewMesosMetricsMetadataStore()
 	return client, nil
-}
-
-func (discoveryClient *MesosDiscoveryClient) initDiscoveryClient() error {
-	clientConf := discoveryClient.clientConf
-	// Based on the Mesos vendor, instantiate the MesosRestClient
-	masterRestClient := master.GetMasterRestClient(clientConf.Master, clientConf)
-	if masterRestClient == nil {
-		return fmt.Errorf("Cannot find RestClient for Mesos : " + string(clientConf.Master))
-	}
-
-	// Login to the Mesos Master and save the login token
-	token, err := masterRestClient.Login()
-	if err != nil {
-		return fmt.Errorf("Error logging to Mesos Master at "+
-			clientConf.MasterIP+"::"+clientConf.MasterPort+" : ", err)
-	}
-
-	clientConf.Token = token
-
-	discoveryClient.masterRestClient = masterRestClient
-
-	return nil
 }
 
 // ===================== Target Info ===========================================
 // Get the Account Values to create VMTTarget in the turbo server corresponding to this client
 func (discoveryClient *MesosDiscoveryClient) GetAccountValues() *probe.TurboTargetInfo { //[]*proto.AccountValue {
 	var accountValues []*proto.AccountValue
-	clientConf := discoveryClient.clientConf
+	clientConf := discoveryClient.targetConf
 	accountValues = clientConf.GetAccountValues()
 
 	glog.Infof("[MesosDiscoveryClient] account values %s\n", accountValues)
-	targetInfo := probe.NewTurboTargetInfoBuilder(PROBE_CATEGORY, string(clientConf.Master), string(conf.MasterIP), accountValues).Create()
+	targetInfo := probe.NewTurboTargetInfoBuilder(PROBE_CATEGORY, string(clientConf.Master), string(conf.MasterIPPort), accountValues).Create()
 	// TODO: change this to return the account values so that the turbo probe can create the target data
 	return targetInfo //accountValues
 }
@@ -142,15 +117,15 @@ func (discoveryClient *MesosDiscoveryClient) GetAccountValues() *probe.TurboTarg
 // ===================== Validation ===========================================
 // Validate the Target
 func (discoveryClient *MesosDiscoveryClient) Validate(accountValues []*proto.AccountValue) (*proto.ValidationResponse, error) {
-	// Login to the Mesos Master and save the login token
-	token, err := discoveryClient.masterRestClient.Login()
+	// refresh login using current leader or select the new one and login
+	err := discoveryClient.MesosLeader.RefreshMesosLeaderLogin()
+
 	if err != nil {
-		glog.Errorf("[MesosDiscoveryClient] Error logging to Mesos Master at %s", accountValues)
-		return nil, fmt.Errorf("[MesosDiscoveryClient] Error %s logging to Mesos Master at using "+
-			"account value %s ", err, accountValues)
+		nerr := fmt.Errorf("[MesosDiscoveryClient] Error %s logging to mesos master using "+
+			"account values %s ", err, accountValues)
+		glog.Errorf("%s", nerr.Error())
+		return nil, nerr
 	}
-	discoveryClient.clientConf.Token = token
-	// TODO: login here and save the login token
 	validationResponse := &proto.ValidationResponse{}
 
 	glog.Infof("validation response %s\n", validationResponse)
@@ -158,21 +133,31 @@ func (discoveryClient *MesosDiscoveryClient) Validate(accountValues []*proto.Acc
 }
 
 // ===================== Discovery ===========================================
-
 // Discover the Target Topology
 func (discoveryClient *MesosDiscoveryClient) Discover(accountValues []*proto.AccountValue) (*proto.DiscoveryResponse, error) {
-	// TODO: use account values to create target conf ?
-	// Connect to mesos master client
-	mesosState, err := discoveryClient.masterRestClient.GetState()
-	if err != nil {
-		glog.Errorf("Error getting state from master : %s \n", err)
-		return nil, fmt.Errorf("Error getting state from master : %s", err)
+	// Use account values to verify the target conf
+	var masterIPPort string
+	for _, accVal := range accountValues {
+		if *accVal.Key == string(conf.MasterIPPort) {
+			masterIPPort = *accVal.StringValue
+		}
 	}
-	glog.V(3).Infof("Mesos Get Succeeded: %v\n", mesosState)
+	if masterIPPort != discoveryClient.targetConf.MasterIPPort {
+		return nil, fmt.Errorf("Invalid target : %s", accountValues)
+	}
 
-	// TODO: update leader and reissue request
+	// Refresh the state using current leader or select the new one and get state
+	mesosLeader := discoveryClient.MesosLeader
+	err := mesosLeader.RefreshMesosLeaderState()
+	if err != nil {
+		nerr := fmt.Errorf("%++v : Error getting state from leader %s", mesosLeader.leaderConf, err)
+		glog.Errorf("%s", nerr.Error())
+		return nil, nerr
+	}
+	glog.V(3).Infof("Mesos get succeeded: %v\n", mesosLeader.MasterState)
+
 	// to create convenience maps for slaves, tasks, convert units
-	mesosMaster, err := discoveryClient.parseMesosState(mesosState)
+	mesosMaster, err := discoveryClient.parseMesosState(mesosLeader.MasterState)
 	if mesosMaster == nil {
 		return nil, fmt.Errorf("Error parsing mesos master response : %s", err)
 	}
@@ -207,42 +192,45 @@ func (discoveryClient *MesosDiscoveryClient) Discover(accountValues []*proto.Acc
 	// Save discovery stats
 	discoveryClient.prevCycleStatsCache.RefreshCache(mesosMaster)
 
-	glog.Infof("End Discovery for MesosDiscoveryClient %s", accountValues)
+	glog.V(2).Infof("End discovery for mesos discovery client %s", accountValues)
 	return discoveryResponse, nil
 }
 
 // Parses the mesos state into agent and task objects and maps
 func (handler *MesosDiscoveryClient) parseMesosState(stateResp *data.MesosAPIResponse) (*data.MesosMaster, error) {
-
-	glog.V(4).Infof("=========== parseMesosState =========")
 	if stateResp.Agents == nil {
-		glog.Errorf("Error getting Agents data from Mesos Master")
-		return nil, errors.New("Error getting Agents data from Mesos Master")
+		nerr := fmt.Errorf("Error getting agents data from Mesos Master")
+		glog.Errorf("%s", nerr.Error())
+		return nil, nerr
 	}
 
 	mesosMaster := &data.MesosMaster{
 		Id:     stateResp.Id,
 		Leader: stateResp.Leader,
+		Pid: stateResp.Pid,
 	}
 	// Agent Map
 	mesosMaster.AgentMap = make(map[string]*data.Agent)
 	handler.agentList = []*data.Agent{}
 	for idx, _ := range stateResp.Agents {
 		agent := stateResp.Agents[idx]
-		agent.ClusterName = stateResp.ClusterName
-		glog.V(2).Infof("Agent : %s Id: %s", agent.Name+"::"+agent.Pid, agent.Id)
-		agent.IP, agent.Port = getSlaveIP(agent)
+		agent.ClusterName = handler.targetConf.MasterIPPort	//Using target scope as cluster scope to handle
+									// deployments where the Cluster is not named
+		glog.V(3).Infof("Agent : %s Id: %s", agent.Name+"::"+agent.Pid, agent.Id)
+		agent.IP, agent.PortNum = getSlaveIP(agent)
 		mesosMaster.AgentMap[agent.Id] = &agent
 		handler.agentList = append(handler.agentList, &agent)
 	}
 
 	// Cluster
-	mesosMaster.Cluster.MasterIP = handler.clientConf.MasterIP
-	mesosMaster.Cluster.ClusterName = stateResp.ClusterName
+	mesosMaster.Cluster.MasterIP = stateResp.Leader
+	// Note - Using target scope as cluster scope to handle  deployments where the Cluster is not named
+	mesosMaster.Cluster.ClusterName = handler.targetConf.MasterIPPort    //stateResp.ClusterName
 
 	if stateResp.Frameworks == nil {
-		glog.Errorf("Error getting Frameworks response, only agents will be visible")
-		return mesosMaster, errors.New("Error getting Frameworks response: %s")
+		nerr := fmt.Errorf("Error getting frameworks response, only agents will be visible")
+		glog.Errorf("%s", nerr.Error())
+		return mesosMaster, nerr
 	}
 
 	// Tasks Map
@@ -256,7 +244,7 @@ func (handler *MesosDiscoveryClient) parseMesosState(stateResp *data.MesosAPIRes
 		mesosMaster.FrameworkMap[framework.Id] = &framework
 
 		if framework.Tasks == nil {
-			glog.Infof("	No tasks defined for framework : %s", framework.Name)
+			glog.V(3).Infof("	No tasks defined for framework : %s", framework.Name)
 			continue
 		}
 		ftasks := framework.Tasks
@@ -284,27 +272,25 @@ func (handler *MesosDiscoveryClient) parseMesosState(stateResp *data.MesosAPIRes
 }
 
 func logMesosSummary(mesosMaster *data.MesosMaster) {
-	glog.Infof("Master Id: %s Leader: %s Cluster: %+v", mesosMaster.Id, mesosMaster.Leader, mesosMaster.Cluster)
+	glog.Infof("Master Id:%s, Pid:%s, Leader:%s, Cluster:%+v", mesosMaster.Id, mesosMaster.Pid, mesosMaster.Leader, mesosMaster.Cluster)
 
 	for _, agent := range mesosMaster.AgentMap {
-		glog.Infof("Agent Id: %s Name: %s IP: %s", agent.Id, agent.Name, agent.IP)
-		glog.Infof("Total number of tasks is %d", len(agent.TaskMap))
+		glog.V(2).Infof("Agent Id: %s, Name: %s, IP: %s, Number of tasks is %d", agent.Id, agent.Name, agent.IP, len(agent.TaskMap))
 		for _, task := range agent.TaskMap {
-			glog.Infof("	Task Id: %s Name: %s", task.Id, task.Name)
+			glog.V(3).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 		}
 	}
 
 	for _, framework := range mesosMaster.FrameworkMap {
-		glog.V(3).Infof("Id: %s Name: %s", framework.Id, framework.Name)
-		glog.V(3).Infof("Total number of tasks is %d", len(framework.Tasks))
+		glog.V(2).Infof("Id: %s, Name: %s, Number of tasks is %d", framework.Id, framework.Name, len(framework.Tasks))
 		for _, task := range framework.Tasks {
-			glog.V(3).Infof("	Task Id: %s Name: %s", task.Id, task.Name)
+			glog.V(3).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 		}
 	}
 
 	glog.V(3).Infof("Total number of tasks is %d", len(mesosMaster.TaskMap))
 	for _, task := range mesosMaster.TaskMap {
-		glog.V(3).Infof("	Task Id: %s Name: %s", task.Id, task.Name)
+		glog.V(3).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 	}
 }
 

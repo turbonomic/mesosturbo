@@ -28,8 +28,7 @@ const (
 type ProbeAcctDefEntryName string
 
 const (
-	MasterIP       ProbeAcctDefEntryName = "MasterIP"
-	MasterPort     ProbeAcctDefEntryName = "MasterPort"
+	MasterIPPort   	ProbeAcctDefEntryName = "MasterIPPort"
 	MasterUsername ProbeAcctDefEntryName = "Username"
 	MasterPassword ProbeAcctDefEntryName = "Password"
 
@@ -37,7 +36,4 @@ const (
 	FrameworkPort     ProbeAcctDefEntryName = "FrameworkPort"
 	FrameworkUsername ProbeAcctDefEntryName = "FrameworkUsername"
 	FrameworkPassword ProbeAcctDefEntryName = "FrameworkPassword"
-
-	ActionIP   ProbeAcctDefEntryName = "ActionIP"
-	ActionPort ProbeAcctDefEntryName = "ActionPort"
 )
