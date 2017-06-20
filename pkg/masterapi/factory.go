@@ -23,10 +23,10 @@ type AgentRestClient interface {
 func GetMasterRestClient(mesosType conf.MesosMasterType, masterConf *conf.MasterConf) MasterRestClient {
 	var endpointStore *MasterEndpointStore
 	if mesosType == conf.Apache {
-		glog.V(2).Infof("[GetMasterRestClient] Creating Apache Mesos Master Client")
+		glog.V(2).Infof("[GetMasterRestClient] Creating Apache Mesos Master Client %++v", masterConf)
 		endpointStore = NewApacheMesosEndpointStore()
 	} else if mesosType == conf.DCOS {
-		glog.V(2).Infof("[GetMasterRestClient] Creating DCOS Mesos Master Client")
+		glog.V(2).Infof("[GetMasterRestClient] Creating DCOS Mesos Master Client %++v", masterConf)
 		endpointStore = NewDCOSMesosEndpointStore()
 	}
 
@@ -43,10 +43,10 @@ func GetMasterRestClient(mesosType conf.MesosMasterType, masterConf *conf.Master
 func GetAgentRestClient(mesosType conf.MesosMasterType, agentConf *conf.AgentConf, masterConf *conf.MasterConf) AgentRestClient {
 	var endpointStore *AgentEndpointStore
 	if mesosType == conf.Apache {
-		glog.V(2).Infof("[GetAgentRestClient] Creating Apache Agent Client")
+		glog.V(2).Infof("[GetAgentRestClient] Creating Apache Agent Client %+v", agentConf)
 		endpointStore = NewApacheAgentEndpointStore()
 	} else if mesosType == conf.DCOS {
-		glog.V(2).Infof("[GetAgentRestClient] Creating DCOS Agent Client")
+		glog.V(2).Infof("[GetAgentRestClient] Creating DCOS Agent Client %+v", agentConf)
 		endpointStore = NewDCOSAgentEndpointStore()
 	}
 

@@ -55,7 +55,7 @@ const AgentAPIClientClass = "[AgentAPIClient] "
 
 // Make a RestAPI call to get the Mesos State using the path specified for the MasterEndpointName.Login endpoint
 func (agentRestClient *GenericAgentAPIClient) GetStats() ([]data.Executor, error) {
-	glog.V(3).Infof(AgentAPIClientClass + "Get Stats ...")
+	glog.V(4).Infof(AgentAPIClientClass + "Get Stats ...")
 	// Execute request
 	endpoint, _ := agentRestClient.EndpointStore.EndpointMap[Stats]
 	request, err := createRequest(endpoint.EndpointPath,
@@ -113,7 +113,7 @@ type GenericAgentStatsParser struct {
 const GenericAgentStatsParserClass = "[GenericAgentStatsParser] "
 
 func (parser *GenericAgentStatsParser) parseResponse(resp []byte) error {
-	glog.V(3).Infof(GenericAgentStatsParserClass + "in parse Agent Stats")
+	glog.V(4).Infof("%s in parse Agent Stats", GenericAgentStatsParserClass)
 	if resp == nil {
 		return ErrorEmptyResponse(GenericAgentStatsParserClass)
 	}
@@ -128,7 +128,7 @@ func (parser *GenericAgentStatsParser) parseResponse(resp []byte) error {
 }
 
 func (parser *GenericAgentStatsParser) GetMessage() interface{} {
-	glog.V(3).Infof(GenericAgentStatsParserClass + "Agent Stats %s\n", parser.Message)
+	glog.V(4).Infof(GenericAgentStatsParserClass + "Agent Stats %s\n", parser.Message)
 	return parser.Message
 }
 

@@ -19,7 +19,7 @@ type ContainerEntityBuilder struct {
 // Build Container EntityDTO using the tasks listed in 'state' json returned from the Mesos Master
 func (cb *ContainerEntityBuilder) BuildEntities() ([]*proto.EntityDTO, error) {
 	cb.errorCollector = new(ErrorCollector)
-	glog.V(2).Infof("[BuildEntities] ....")
+	glog.V(3).Infof("[BuildEntities] ....")
 	result := []*proto.EntityDTO{}
 
 	var containerEntitiesMap map[string]*ContainerEntity
@@ -74,7 +74,7 @@ func (cb *ContainerEntityBuilder) buildContainerEntityDTO(task *data.Task, commo
 		cb.errorCollector.Collect(fmt.Errorf("Cannot find the hosting slave for task %s", dispName))
 		return nil
 	}
-	glog.V(2).Infof("Container %s is hosted on %s", dispName, slaveId)
+	glog.V(3).Infof("Container %s is hosted on %s", dispName, slaveId)
 
 	if commoditiesSold != nil {
 		entityDTOBuilder.SellsCommodities(commoditiesSold)
@@ -88,7 +88,7 @@ func (cb *ContainerEntityBuilder) buildContainerEntityDTO(task *data.Task, commo
 		Value:     &ipAddress,
 	}
 	entityDTOBuilder = entityDTOBuilder.WithProperty(ipProp)
-	glog.V(2).Infof("Container %s will be stitched to VM with IP %s", dispName, ipAddress)
+	glog.V(3).Infof("Container %s will be stitched to VM with IP %s", dispName, ipAddress)
 
 	return entityDTOBuilder
 }

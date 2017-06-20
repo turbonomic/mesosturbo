@@ -19,10 +19,9 @@ func main() {
 
 	s := service.NewMesosTurboService()
 	s.AddFlags(pflag.CommandLine)
+	pflag.CommandLine.AddGoFlagSet(goflag.CommandLine)
 	pflag.Parse()
 
 	s.Run(pflag.CommandLine.Args())
-
-	goflag.Parse()
 
 } //end main

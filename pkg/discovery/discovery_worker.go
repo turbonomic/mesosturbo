@@ -74,7 +74,7 @@ func(agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
 	// Create DTOs
 	entityDTOs, errList := agentTask.createDiscoveryDTOs(nodeRepository)
 	ec.CollectAll(errList)
-	glog.V(2).Infof("%s : DONE create entities\n", node.IP)
+	glog.V(3).Infof("%s : DONE create entities\n", node.IP)
 	//for _, dto := range entityDTOs {
 	//	glog.V(3).Infof("%s --> %s:%s\n %+s", node.IP, dto.GetEntityType(), dto.GetId(), dto)
 	//}
@@ -173,7 +173,7 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 		go func(idx int) {
 			node := worker.nodeList[idx]
 			//fmt.Printf("%s : Begin Process Agent %d::%s\n", worker.name, idx, node.IP)
-			glog.V(2).Infof("%s: Begin Process Agent %d::%s", worker.name, idx, node.Id)
+			glog.V(3).Infof("%s: Begin Process Agent %d::%s", worker.name, idx, node.Id)
 			agentTask := &MesosAgentTask{
 				node: node,
 				masterConf: worker.masterConf,
@@ -185,7 +185,7 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 			//workerRepos[idx] = nodeResponse
 			worker.nodeResponseQueue <- nodeResponse //send it on the channel/queue
 			//fmt.Printf("%s : End Process Agent %d::%s, num of tasks: %d\n",  worker.name, idx, node.IP, len(nodeResponse.nodeRepository.taskEntities))
-			glog.V(2).Infof("%s : End Process Agent %d::%s, num of tasks: %d",  worker.name, idx, node.Id, len(nodeResponse.nodeRepository.taskEntities))
+			glog.V(3).Infof("%s : End Process Agent %d::%s, num of tasks: %d",  worker.name, idx, node.Id, len(nodeResponse.nodeRepository.taskEntities))
 		}(idx)
 	}
 	go func() {

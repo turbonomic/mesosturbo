@@ -339,7 +339,7 @@ func (monitor *DefaultMesosMonitor) parseAgentUsedStats(agent *data.Agent, arrOf
 
 	} // task loop
 	//fmt.Printf("Agent resource stats: [capacity %+v] [usage %+v]\n", agent.Resources, agent.ResourceUseStats)
-	glog.Infof("%s : Agent resource stats: [capacity %+v] [usage %+v]\n", agent.IP, agent.Resources, agent.ResourceUseStats)
+	glog.V(2).Infof("%s : Agent resource stats: [capacity %+v] [usage %+v]\n", agent.IP, agent.Resources, agent.ResourceUseStats)
 	glog.V(3).Infof("--------------------------------------------------")
 	return nil
 }
