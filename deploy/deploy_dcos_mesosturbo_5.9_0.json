@@ -15,7 +15,8 @@
     "--masterpwd", "<MESOS-MASTER-PASSWORD>",
     "--turboserverurl", "http://<TURBO-OPERATIONS-MANAGER-IP>:80",
     "--opsmanagerusername", "<TURBO-OPERATIONS-MANAGER-ADMIN-USERNAME>",
-    "--opsmanagerpassword", "<TURBO-OPERATIONS-MANAGER-ADMIN-PASSWORD>"
+    "--opsmanagerpassword", "<TURBO-OPERATIONS-MANAGER-ADMIN-PASSWORD>",
+    "--v", "2"
   ],
   "cpus": 0.5,
   "mem": 128.0,

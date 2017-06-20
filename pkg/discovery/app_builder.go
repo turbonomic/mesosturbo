@@ -22,7 +22,7 @@ type AppEntityBuilder struct {
 // Build Application EntityDTO using the tasks listed in the 'state' json returned from the Mesos Master
 func (tb *AppEntityBuilder) BuildEntities() ([]*proto.EntityDTO, error) {
 	tb.errorCollector = new(ErrorCollector)
-	glog.V(2).Infof("[BuildEntities] ...... ")
+	glog.V(3).Infof("[BuildEntities] ...... ")
 	result := []*proto.EntityDTO{}
 
 	var taskEntitiesMap map[string]*TaskEntity

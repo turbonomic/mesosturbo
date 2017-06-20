@@ -70,7 +70,6 @@ func (discoveryClient *MesosDiscoveryClient) CreateDiscoveryWorker(st SelectionS
 		agentList := agentGroups[i]
 		discoveryWorker := NewDiscoveryWorker(discoveryClient.MesosLeader.leaderConf, agentList, discoveryClient.prevCycleStatsCache)
 		name := fmt.Sprintf("DW-%d", i)
-		fmt.Println("name=", name)
 		discoveryWorker.SetName(name)
 		workerGroup = append(workerGroup, discoveryWorker)
 	}
@@ -128,7 +127,7 @@ func (discoveryClient *MesosDiscoveryClient) Validate(accountValues []*proto.Acc
 	}
 	validationResponse := &proto.ValidationResponse{}
 
-	glog.Infof("validation response %s\n", validationResponse)
+	glog.Infof("%s : End validation using leader %++v", accountValues, discoveryClient.MesosLeader.leaderConf)
 	return validationResponse, nil
 }
 
@@ -191,8 +190,7 @@ func (discoveryClient *MesosDiscoveryClient) Discover(accountValues []*proto.Acc
 	discoveryResponse, err := discoveryClient.createDiscoveryResponse(slice)
 	// Save discovery stats
 	discoveryClient.prevCycleStatsCache.RefreshCache(mesosMaster)
-
-	glog.V(2).Infof("End discovery for mesos discovery client %s", accountValues)
+	glog.Infof("%s : End discovery using leader %++v", accountValues, discoveryClient.MesosLeader.leaderConf)
 	return discoveryResponse, nil
 }
 
@@ -277,20 +275,20 @@ func logMesosSummary(mesosMaster *data.MesosMaster) {
 	for _, agent := range mesosMaster.AgentMap {
 		glog.V(2).Infof("Agent Id: %s, Name: %s, IP: %s, Number of tasks is %d", agent.Id, agent.Name, agent.IP, len(agent.TaskMap))
 		for _, task := range agent.TaskMap {
-			glog.V(3).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
+			glog.V(4).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 		}
 	}
 
 	for _, framework := range mesosMaster.FrameworkMap {
-		glog.V(2).Infof("Id: %s, Name: %s, Number of tasks is %d", framework.Id, framework.Name, len(framework.Tasks))
+		glog.V(2).Infof("Framework Id: %s, Name: %s, Number of tasks is %d", framework.Id, framework.Name, len(framework.Tasks))
 		for _, task := range framework.Tasks {
-			glog.V(3).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
+			glog.V(4).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 		}
 	}
 
-	glog.V(3).Infof("Total number of tasks is %d", len(mesosMaster.TaskMap))
+	glog.V(4).Infof("Total number of tasks is %d", len(mesosMaster.TaskMap))
 	for _, task := range mesosMaster.TaskMap {
-		glog.V(3).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
+		glog.V(4).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 	}
 }
 

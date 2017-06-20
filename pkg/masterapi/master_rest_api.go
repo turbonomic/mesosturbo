@@ -73,7 +73,7 @@ const MesosMasterAPIClientClass = "MesosMasterAPIClient"
 // Handle login to the Mesos Client using the path specified for the MasterEndpointName.Login endpoint
 // Returns the login token if successful, else error
 func (mesosRestClient *GenericMasterAPIClient) Login() (string, error) {
-	glog.V(3).Infof("[GenericMasterAPIClient] Login ...")
+	glog.V(4).Infof("[GenericMasterAPIClient] Login ...")
 
 	// Execute request
 	endpoint, _ := mesosRestClient.EndpointStore.EndpointMap[Login]
@@ -113,7 +113,7 @@ func (mesosRestClient *GenericMasterAPIClient) Login() (string, error) {
 // Make a RestAPI call to get the Mesos State using the path specified for the MasterEndpointName.Login endpoint
 // Returns the state as MesosAPIResponse object if successful, else error
 func (mesosRestClient *GenericMasterAPIClient) GetState() (*data.MesosAPIResponse, error) {
-	glog.V(3).Infof("[GenericMasterAPIClient] Get State ...")
+	glog.V(4).Infof("[GenericMasterAPIClient] Get State ...")
 	// Execute request
 	endpoint, _ := mesosRestClient.EndpointStore.EndpointMap[State]
 	request, err := createRequest(endpoint.EndpointPath,
@@ -159,7 +159,6 @@ func createRequest(endpoint, ip, port, token string) (*http.Request, error) {
 	if token != "" {
 		req.Header.Add("Authorization", "token="+token)
 	}
-	glog.V(3).Infof("Created Request %s\n", req)
 	return req, nil
 }
 
@@ -232,7 +231,7 @@ type GenericMasterStateParser struct {
 const GenericMasterStateParserClass = "[GenericMasterStateParser]"
 
 func (parser *GenericMasterStateParser) parseResponse(resp []byte) error {
-	glog.V(3).Infof("%s in parseAPIStateResponse : %s", GenericMasterStateParserClass, resp)
+	glog.V(4).Infof("%s in parseAPIStateResponse : %s", GenericMasterStateParserClass, resp)
 	if resp == nil {
 		return ErrorEmptyResponse(GenericMasterStateParserClass)
 	}
@@ -247,6 +246,6 @@ func (parser *GenericMasterStateParser) parseResponse(resp []byte) error {
 }
 
 func (parser *GenericMasterStateParser) GetMessage() interface{} {
-	glog.V(3).Infof(GenericMasterStateParserClass + " Mesos State %s\n", parser.Message)
+	glog.V(4).Infof(GenericMasterStateParserClass + " Mesos State %s\n", parser.Message)
 	return parser.Message
 }

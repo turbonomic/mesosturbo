@@ -16,7 +16,6 @@ import (
 
 // VMTServer has all the context and params needed to run a Scheduler
 type MesosTurboService struct {
-	LogLevel           int
 	MesosMasterConfig  string	//path to the mesos master config
 	TurboCommConfig    string	// path to the turbo communication config file
 
@@ -40,7 +39,6 @@ func NewMesosTurboService() *MesosTurboService {
 
 // AddFlags adds flags for a specific VMTServer to the specified FlagSet
 func (s *MesosTurboService) AddFlags(fs *pflag.FlagSet) {
-	fs.IntVar(&s.LogLevel, "v", s.LogLevel, "Log level")
 	fs.StringVar(&s.MesosMasterConfig, "mesosconfig", s.MesosMasterConfig, "Path to the mesos config file.")
 	fs.StringVar(&s.TurboCommConfig, "turboconfig", s.TurboCommConfig, "Path to the turbo config flag.")
 

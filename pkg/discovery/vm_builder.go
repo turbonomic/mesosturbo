@@ -22,7 +22,7 @@ type VMEntityBuilder struct {
 // Build VM EntityDTO using the agent listed in the 'state' json returned from the Mesos Master
 func (nb *VMEntityBuilder) BuildEntities() ([]*proto.EntityDTO, error) {
 	nb.errorCollector = new(ErrorCollector)
-	glog.V(2).Infof("[BuildEntities] ...... ")
+	glog.V(3).Infof("[BuildEntities] ...... ")
 	result := []*proto.EntityDTO{}
 
 	nodeEntity := nb.nodeRepository.GetAgentEntity()
