@@ -2,8 +2,8 @@ package conf
 
 // Represents the Mesos Master Vendor
 type MesosMasterType string
-const (
 
+const (
 	Apache MesosMasterType = "Apache Mesos"
 	DCOS   MesosMasterType = "Mesosphere DCOS"
 )
@@ -24,11 +24,12 @@ type ProbeCategory string
 const (
 	CloudNative ProbeCategory = "Cloud Native"
 )
+
 // Constants for the Mesos probe account definition fields in the Turbo server
 type ProbeAcctDefEntryName string
 
 const (
-	MasterIPPort   	ProbeAcctDefEntryName = "MasterIPPort"
+	MasterIPPort   ProbeAcctDefEntryName = "MasterIPPort"
 	MasterUsername ProbeAcctDefEntryName = "Username"
 	MasterPassword ProbeAcctDefEntryName = "Password"
 

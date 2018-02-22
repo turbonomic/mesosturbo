@@ -6,8 +6,8 @@ import (
 	"github.com/turbonomic/mesosturbo/pkg/conf"
 	"github.com/turbonomic/mesosturbo/pkg/data"
 	"github.com/turbonomic/mesosturbo/pkg/masterapi"
-	"time"
 	"strings"
+	"time"
 )
 
 type DefaultMesosMonitor struct {
@@ -90,7 +90,7 @@ func (ec *ErrorCollector) Collect(err error) {
 }
 
 func (ec *ErrorCollector) CollectAll(errList []error) {
-	for i, _ := range errList{
+	for i, _ := range errList {
 		err := errList[i]
 		if err != nil {
 			*ec = append(*ec, err)
@@ -98,13 +98,13 @@ func (ec *ErrorCollector) CollectAll(errList []error) {
 	}
 }
 
-func (ec *ErrorCollector) Error() (string){
+func (ec *ErrorCollector) Error() string {
 	var errorStr []string
 	errorStr = append(errorStr, "Collected errors:")
 	for i, err := range *ec {
 		errorStr = append(errorStr, fmt.Sprintf("Error %d: %s", i, err.Error()))
 	}
-	return  strings.Join(errorStr, "\n")
+	return strings.Join(errorStr, "\n")
 }
 
 func (monitor *DefaultMesosMonitor) setNodeMetrics(nodeEntity *AgentEntity, monitoringProps map[ENTITY_ID]*EntityMonitoringProps, ec *ErrorCollector) {
@@ -208,7 +208,7 @@ func (monitor *DefaultMesosMonitor) setContainerMetrics(containerEntities map[st
 }
 
 // Helper method to set value for a metric
-func setValue(entity MesosEntity, value *float64, propKey PropKey, props *EntityMonitoringProps, ec *ErrorCollector)  {
+func setValue(entity MesosEntity, value *float64, propKey PropKey, props *EntityMonitoringProps, ec *ErrorCollector) {
 	propMap := props.propMap
 
 	prop, ok := propMap[propKey]
@@ -220,15 +220,15 @@ func setValue(entity MesosEntity, value *float64, propKey PropKey, props *Entity
 				//fmt.Printf("%s::%s : %s : %s\n", entity.GetType(),entity.GetId(), propKey, &metricSetter)
 				metricSetter.SetMetricValue(entity, value)
 			} else {
-				ec.Collect(fmt.Errorf("%s::%s : Missing metric setter for key %s", entity.GetType(),entity.GetId(), propKey))
+				ec.Collect(fmt.Errorf("%s::%s : Missing metric setter for key %s", entity.GetType(), entity.GetId(), propKey))
 				return
 			}
 		} else {
-			ec.Collect(fmt.Errorf("%s::%s : Missing metric def for key %s", entity.GetType(),entity.GetId(), propKey))
+			ec.Collect(fmt.Errorf("%s::%s : Missing metric def for key %s", entity.GetType(), entity.GetId(), propKey))
 			return
 		}
 	} else {
-		ec.Collect(fmt.Errorf("%s::%s : Missing monitoring property for key %s", entity.GetType(),entity.GetId(), propKey))
+		ec.Collect(fmt.Errorf("%s::%s : Missing monitoring property for key %s", entity.GetType(), entity.GetId(), propKey))
 		return
 	}
 }
@@ -331,7 +331,7 @@ func (monitor *DefaultMesosMonitor) parseAgentUsedStats(agent *data.Agent, arrOf
 		task.ResourceUseStats = &data.CalculatedUse{}
 		task.ResourceUseStats.CPUMHz = usedCPU // save in the task
 		task.ResourceUseStats.MemKB = usedMemKB
-		task.Resources.MemMB = currStats.MemLimitBytes / (data.KB_MULTIPLIER*data.KB_MULTIPLIER)
+		task.Resources.MemMB = currStats.MemLimitBytes / (data.KB_MULTIPLIER * data.KB_MULTIPLIER)
 		task.Resources.CPUUnits = currStats.CPUsLimit
 		//task.Resources.Disk = currStats.DiskLimitBytes / float64(1024.00*1024.00)
 

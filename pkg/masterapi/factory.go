@@ -6,7 +6,6 @@ import (
 	"github.com/turbonomic/mesosturbo/pkg/data"
 )
 
-
 // Interface for the client to handle Rest API communication with the Mesos Master
 type MasterRestClient interface {
 	Login() (string, error)
@@ -57,5 +56,3 @@ func GetAgentRestClient(mesosType conf.MesosMasterType, agentConf *conf.AgentCon
 
 	return NewGenericAgentAPIClient(agentConf, masterConf, endpointStore)
 }
-
-

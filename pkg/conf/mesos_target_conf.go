@@ -1,64 +1,63 @@
 package conf
 
 import (
-	"io/ioutil"
 	"encoding/json"
-	"github.com/golang/glog"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
-	"github.com/turbonomic/turbo-go-sdk/pkg/probe"
+	"io/ioutil"
 )
 
 const (
 	DEFAULT_APACHE_MESOS_MASTER_PORT string = "5050"
-	DEFAULT_DCOS_MESOS_MASTER_PORT string = ""
+	DEFAULT_DCOS_MESOS_MASTER_PORT   string = ""
 )
 
 // Configuration Parameters for the Mesos Target that is registered with the Operations Manager
 type MesosTargetConf struct {
 	// Master related - Apache or DCOS Mesos
-	Master         MesosMasterType  `json:"master"`
+	Master MesosMasterType `json:"master"`
 	// List of IP:Port
-	MasterIPPort   string 		`json:"master-ipport"`
+	MasterIPPort string `json:"master-ipport"`
 	// Credentials
-	MasterUsername string		`json:"master-user,omitempty"`
-	MasterPassword string		`json:"master-pwd,omitempty"`
+	MasterUsername string `json:"master-user,omitempty"`
+	MasterPassword string `json:"master-pwd,omitempty"`
 
-	FrameworkConf			`json:"framework,omitempty"`
+	FrameworkConf `json:"framework,omitempty"`
 }
 
 // Configuration of a Master node
 type MasterConf struct {
-	Master         MesosMasterType
+	Master MesosMasterType
 	// IP:Port
-	MasterIP       string
-	MasterPort     string
+	MasterIP   string
+	MasterPort string
 	// Credentials
 	MasterUsername string
 	MasterPassword string
 	// Login Token obtained from the Mesos Master
-	Token          string
+	Token string
 }
 
 type FrameworkConf struct {
 	// Scheduler or Framework related
-	Framework      	   MesosFrameworkType   `json:"framework"`
-	FrameworkIP        string		`json:"framework-ip"`
-	FrameworkPort      string		`json:"framework-port"`
-	FrameworkUser      string		`json:"framework-user"`
-	FrameworkPassword  string	        `json:"framework-pwd"`
+	Framework         MesosFrameworkType `json:"framework"`
+	FrameworkIP       string             `json:"framework-ip"`
+	FrameworkPort     string             `json:"framework-port"`
+	FrameworkUser     string             `json:"framework-user"`
+	FrameworkPassword string             `json:"framework-pwd"`
 }
 
 type ActionFrameworkConf struct {
 	// Action Executor related to using Layer-X
-	ActionIP       string
-	ActionPort     string
-	ActionAPI      string
+	ActionIP   string
+	ActionPort string
+	ActionAPI  string
 }
 
 type AgentConf struct {
-	AgentIP       string
-	AgentPort     string
+	AgentIP   string
+	AgentPort string
 }
 
 // Create a new MesosTargetConf from a json file.
@@ -67,7 +66,7 @@ func NewMesosTargetConf(targetConfigFilePath string) (*MesosTargetConf, error) {
 	glog.Infof("[MesosClientConf] Target configuration from %s", targetConfigFilePath)
 	config, err := readConfig(targetConfigFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("[[MesosTargetConf] Error reading config "+ targetConfigFilePath + " : %s" , err)
+		return nil, fmt.Errorf("[[MesosTargetConf] Error reading config "+targetConfigFilePath+" : %s", err)
 	}
 
 	// Provide framework ip for dcos mesos
@@ -76,7 +75,7 @@ func NewMesosTargetConf(targetConfigFilePath string) (*MesosTargetConf, error) {
 	// Validate
 	ok, err := config.validate()
 	if !ok {
-		return nil, fmt.Errorf("[MesosTargetConf] Invalid config : %s",  err)
+		return nil, fmt.Errorf("[MesosTargetConf] Invalid config : %s", err)
 	}
 	glog.Infof("[MesosTargetConf] Mesos target config: %+v\n", config)
 	return config, nil
@@ -85,14 +84,14 @@ func NewMesosTargetConf(targetConfigFilePath string) (*MesosTargetConf, error) {
 // Provide framework ip for dcos mesos
 func dcosMesosTargetConf(config *MesosTargetConf) {
 	// For DCOS Mesos, framework IP is not specified
-	if (config.FrameworkIP == "") {
+	if config.FrameworkIP == "" {
 		config.Framework = DCOS_Marathon
 	}
 }
 
 // Create a new MesosTargetConf from a given list of AccountValues
 // Return null config if the there are errors validating the config
-func CreateMesosTargetConf(targetType string, accountValues []*proto.AccountValue) (probe.TurboTargetConf, error) {
+func CreateMesosTargetConf(targetType string, accountValues []*proto.AccountValue) (*MesosTargetConf, error) {
 	// TODO: revisit if the targetType parameter should be string or MesosMasterType
 	var mesosMasterType MesosMasterType
 	if targetType == string(Apache) {
@@ -100,32 +99,32 @@ func CreateMesosTargetConf(targetType string, accountValues []*proto.AccountValu
 	} else if targetType == string(DCOS) {
 		mesosMasterType = DCOS
 	} else {
-		glog.Errorf("Unknown mesos master type " , targetType)
-		return nil, fmt.Errorf("Unknown mesos master type %s" , targetType)
+		glog.Errorf("Unknown mesos master type ", targetType)
+		return nil, fmt.Errorf("Unknown mesos master type %s", targetType)
 	}
 	config := &MesosTargetConf{
 		Master: mesosMasterType,
 	}
 	for _, accVal := range accountValues {
-		if *accVal.Key ==  string(MasterIPPort) {
+		if *accVal.Key == string(MasterIPPort) {
 			config.MasterIPPort = *accVal.StringValue
 		}
-		if *accVal.Key ==  string(MasterUsername) {
+		if *accVal.Key == string(MasterUsername) {
 			config.MasterUsername = *accVal.StringValue
 		}
-		if *accVal.Key ==  string(MasterPassword) {
+		if *accVal.Key == string(MasterPassword) {
 			config.MasterPassword = *accVal.StringValue
 		}
-		if *accVal.Key ==  string(FrameworkIP) {
+		if *accVal.Key == string(FrameworkIP) {
 			config.FrameworkIP = *accVal.StringValue
 		}
-		if *accVal.Key ==  string(FrameworkPort) {
+		if *accVal.Key == string(FrameworkPort) {
 			config.FrameworkPort = *accVal.StringValue
 		}
-		if *accVal.Key ==  string(FrameworkUsername) {
+		if *accVal.Key == string(FrameworkUsername) {
 			config.FrameworkUser = *accVal.StringValue
 		}
-		if *accVal.Key ==  string(FrameworkPassword) {
+		if *accVal.Key == string(FrameworkPassword) {
 			config.FrameworkPassword = *accVal.StringValue
 		}
 	}
@@ -141,7 +140,6 @@ func CreateMesosTargetConf(targetType string, accountValues []*proto.AccountValu
 	return config, nil
 }
 
-
 // Get the Account Values to create VMTTarget in the turbo server corresponding to this client
 func (mesosConf *MesosTargetConf) GetAccountValues() []*proto.AccountValue {
 	if _, err := mesosConf.validate(); err != nil {
@@ -152,66 +150,70 @@ func (mesosConf *MesosTargetConf) GetAccountValues() []*proto.AccountValue {
 	// Convert all parameters in clientConf to AccountValue list
 	ipportProp := string(MasterIPPort)
 	accVal := &proto.AccountValue{
-		Key: &ipportProp,
+		Key:         &ipportProp,
 		StringValue: &mesosConf.MasterIPPort,
 	}
 	accountValues = append(accountValues, accVal)
 
-	userProp := string(MasterUsername)
-	accVal = &proto.AccountValue{
-		Key: &userProp,
-		StringValue: &mesosConf.MasterUsername,
+	if mesosConf.MasterUsername != "" {
+		userProp := string(MasterUsername)
+		accVal = &proto.AccountValue{
+			Key:         &userProp,
+			StringValue: &mesosConf.MasterUsername,
+		}
+		accountValues = append(accountValues, accVal)
 	}
-	accountValues = append(accountValues, accVal)
 
-	pwdProp := string(MasterPassword)
-	accVal = &proto.AccountValue{
-		Key: &pwdProp,
-		StringValue: &mesosConf.MasterPassword,
+	if mesosConf.MasterPassword != "" {
+		pwdProp := string(MasterPassword)
+		accVal = &proto.AccountValue{
+			Key:         &pwdProp,
+			StringValue: &mesosConf.MasterPassword,
+		}
+		accountValues = append(accountValues, accVal)
 	}
-	accountValues = append(accountValues, accVal)
 
 	if mesosConf.Master == Apache {
 		fmIpProp := string(FrameworkIP)
 		accVal = &proto.AccountValue{
-			Key: &fmIpProp,
+			Key:         &fmIpProp,
 			StringValue: &mesosConf.FrameworkIP,
 		}
 		accountValues = append(accountValues, accVal)
 
 		fmPort := string(FrameworkPort)
 		accVal = &proto.AccountValue{
-			Key: &fmPort,
+			Key:         &fmPort,
 			StringValue: &mesosConf.FrameworkPort,
 		}
 		accountValues = append(accountValues, accVal)
 
 		fmUserProp := string(FrameworkUsername)
 		accVal = &proto.AccountValue{
-			Key: &fmUserProp,
+			Key:         &fmUserProp,
 			StringValue: &mesosConf.FrameworkUser,
 		}
 		accountValues = append(accountValues, accVal)
 
 		fmPwd := string(FrameworkPassword)
 		accVal = &proto.AccountValue{
-			Key: &fmPwd,
+			Key:         &fmPwd,
 			StringValue: &mesosConf.FrameworkPassword,
 		}
 		accountValues = append(accountValues, accVal)
 	}
 
-	glog.V(2).Infof("[GetAccountValues] account values %s\n",  accountValues)
+	glog.V(1).Infof("[GetAccountValues] account values %s\n", accountValues)
 
 	return accountValues
 }
 
 func (conf *MesosTargetConf) validate() (bool, error) {
-	if (conf.Master == "") {
+	if conf.Master == "" {
 		return false, fmt.Errorf("Mesos Master Type is required :  %+v" + fmt.Sprint(conf))
 	}
 
-	if (conf.MasterIPPort == "") {
+	if conf.MasterIPPort == "" {
 		return false, fmt.Errorf("Mesos Master IP:Port list is required :  %+v" + fmt.Sprint(conf))
 	}
 	return true, nil
@@ -227,7 +229,7 @@ func readConfig(path string) (*MesosTargetConf, error) {
 	err := json.Unmarshal(file, &config)
 
 	if err != nil {
-		return nil, fmt.Errorf(string(file) + " \nUnmarshall error : %s" , err)
+		return nil, fmt.Errorf(string(file)+" \nUnmarshall error : %s", err)
 	}
 	return &config, nil
 }

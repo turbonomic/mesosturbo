@@ -11,8 +11,9 @@ const (
 
 // Endpoint paths for Apache Agent
 type ApacheAgentEndpointPath string
+
 const (
-	Apache_StatsPath      ApacheAgentEndpointPath = "/monitor/statistics.json"
+	Apache_StatsPath ApacheAgentEndpointPath = "/monitor/statistics.json"
 )
 
 // Endpoint store containing endpoint and parsers for Apache Mesos Master

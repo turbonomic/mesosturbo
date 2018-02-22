@@ -1,8 +1,7 @@
 package data
 
-
 type MesosAPIResponse struct {
-	Leader      string `json:"leader"`
+	Leader     string `json:"leader"`
 	LeaderInfo Leader `json:"leader_info"`
 	//LeaderInfo struct {
 	//		   Id string `json:"id"`
@@ -13,17 +12,17 @@ type MesosAPIResponse struct {
 	Version     string `json:"version"`
 	Id          string `json:"id"`
 	ClusterName string `json:"cluster"`
-	Pid 	string `json:"pid"`
+	Pid         string `json:"pid"`
 	//ActivatedSlaves   float64     `json:"activated_slaves"`
 	//DeActivatedSlaves float64     `json:"deactivated_slaves"`
-	Agents            []Agent     `json:"slaves"`
-	Frameworks        []Framework `json:"frameworks"`
+	Agents     []Agent     `json:"slaves"`
+	Frameworks []Framework `json:"frameworks"`
 }
 
 type Leader struct {
-	Id string `json:"id"`
-	Pid string `json:"pid"`
-	Port  int `json:"port"`
+	Id       string `json:"id"`
+	Pid      string `json:"pid"`
+	Port     int    `json:"port"`
 	Hostname string `json:"hostname"`
 }
 
@@ -37,8 +36,8 @@ type Agent struct {
 	Name             string    `json:"hostname"`
 	//Calculated       CalculatedUse
 	//Attributes       Attributes `json:"attributes"`
-	Active           bool   `json:"active"`
-	Version          string `json:"version"`
+	Active  bool   `json:"active"`
+	Version string `json:"version"`
 	// -------- Computed parameters
 	ClusterName      string
 	IP               string // parsed ip for the Slave
@@ -63,9 +62,9 @@ type Task struct {
 	FrameworkId string    `json:"framework_id"`
 	SlaveId     string    `json:"slave_id"`
 	Container   Container `json:"container"`
-	Discovery        Discovery `json:"discovery"`
-	ExecutorId string `json:"executor_id"`
-	Id         string `json:"id"`
+	Discovery   Discovery `json:"discovery"`
+	ExecutorId  string    `json:"executor_id"`
+	Id          string    `json:"id"`
 	//Labels           []Label   `json:"labels"`
 	Name      string    `json:"name"`
 	Resources Resources `json:"resources"`
@@ -88,6 +87,7 @@ type PortInfo struct {
 	Number   int64  `json:"number"`
 	Protocol string `json:"protocol"`
 }
+
 //
 //type NetworkInfos struct {
 //	Infos []NetworkInfo `json:"network_infos"`

@@ -2,10 +2,10 @@ package main
 
 import (
 	goflag "flag"
-	"runtime"
-	"github.com/turbonomic/mesosturbo/cmd/service"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
+	"github.com/turbonomic/mesosturbo/cmd/service"
+	"runtime"
 )
 
 func init() {

@@ -1,17 +1,18 @@
 package master
 
 import (
-	"github.com/turbonomic/mesosturbo/pkg/conf"
-	"github.com/golang/glog"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"github.com/golang/glog"
+	"github.com/turbonomic/mesosturbo/pkg/conf"
 	"github.com/turbonomic/mesosturbo/pkg/data"
+	"io/ioutil"
 )
 
 type AgentEndpointName string
+
 const (
-	Stats  AgentEndpointName = "stats"
+	Stats AgentEndpointName = "stats"
 )
 
 // The endpoints used for making RestAPI calls to the Agent
@@ -30,22 +31,22 @@ type AgentEndpointStore struct {
 // Represents the generic client used to connect to a Agent
 type GenericAgentAPIClient struct {
 	// Master service configuration
-	MasterConf    *conf.MasterConf
+	MasterConf *conf.MasterConf
 	// Mesos Agent configuration
-	AgentConf     *conf.AgentConf
+	AgentConf *conf.AgentConf
 	// Endpoint store with the endpoint paths for different rest api calls
 	EndpointStore *AgentEndpointStore
 
-	DebugMode bool
-	DebugProps     map[string]string
+	DebugMode  bool
+	DebugProps map[string]string
 }
 
 // Create a new instance of the GenericMasterAPIClient
 // @param AgentConf the conf.AgentConf that contains the configuration information for the Agent
 // @param epStore    the Endpoint store containing the Rest API endpoints for the Agent
-func NewGenericAgentAPIClient(agentConf *conf.AgentConf, masterConf *conf.MasterConf, epStore *AgentEndpointStore) *GenericAgentAPIClient{
+func NewGenericAgentAPIClient(agentConf *conf.AgentConf, masterConf *conf.MasterConf, epStore *AgentEndpointStore) *GenericAgentAPIClient {
 	return &GenericAgentAPIClient{
-		MasterConf: masterConf,
+		MasterConf:    masterConf,
 		AgentConf:     agentConf,
 		EndpointStore: epStore,
 	}
@@ -59,12 +60,12 @@ func (agentRestClient *GenericAgentAPIClient) GetStats() ([]data.Executor, error
 	// Execute request
 	endpoint, _ := agentRestClient.EndpointStore.EndpointMap[Stats]
 	request, err := createRequest(endpoint.EndpointPath,
-					agentRestClient.AgentConf.AgentIP, string(agentRestClient.AgentConf.AgentPort),
-					agentRestClient.MasterConf.Token)
+		agentRestClient.AgentConf.AgentIP, string(agentRestClient.AgentConf.AgentPort),
+		agentRestClient.MasterConf.Token)
 	if err != nil {
 		return nil, ErrorCreateRequest(AgentAPIClientClass, err)
 	}
-	glog.V(3).Infof(AgentAPIClientClass + ": send GetStats() request %s ", request)
+	glog.V(3).Infof(AgentAPIClientClass+": send GetStats() request %s ", request)
 
 	var byteContent []byte
 	if agentRestClient.DebugMode { // Debug mode
@@ -74,7 +75,7 @@ func (agentRestClient *GenericAgentAPIClient) GetStats() ([]data.Executor, error
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf(AgentAPIClientClass + " : GetStats() error :  %s", err)
+		return nil, fmt.Errorf(AgentAPIClientClass+" : GetStats() error :  %s", err)
 	}
 
 	// Parse response
@@ -92,7 +93,6 @@ func (agentRestClient *GenericAgentAPIClient) GetStats() ([]data.Executor, error
 	return nil, ErrorConvertResponse(AgentAPIClientClass, err)
 }
 
-
 func (agentRestClient *GenericAgentAPIClient) getDebugModeStats() ([]byte, error) {
 	fmt.Println("========= getDebugModeStats() : DEBUG MODE =============")
 	filePath, exists := agentRestClient.DebugProps["file"]
@@ -105,6 +105,7 @@ func (agentRestClient *GenericAgentAPIClient) getDebugModeStats() ([]byte, error
 	}
 	return byteContent, nil
 }
+
 // =============================================================================
 type GenericAgentStatsParser struct {
 	Message []data.Executor
@@ -121,15 +122,13 @@ func (parser *GenericAgentStatsParser) parseResponse(resp []byte) error {
 	err := json.Unmarshal(resp, &usedRes)
 	if err != nil {
 		glog.Errorf("JSON error %s", err)
-		return fmt.Errorf(GenericAgentStatsParserClass + " Error in json unmarshal for stats response : %s ", err)
+		return fmt.Errorf(GenericAgentStatsParserClass+" Error in json unmarshal for stats response : %s ", err)
 	}
 	parser.Message = *usedRes
 	return nil
 }
 
 func (parser *GenericAgentStatsParser) GetMessage() interface{} {
-	glog.V(4).Infof(GenericAgentStatsParserClass + "Agent Stats %s\n", parser.Message)
+	glog.V(4).Infof(GenericAgentStatsParserClass+"Agent Stats %s\n", parser.Message)
 	return parser.Message
 }
-
-
