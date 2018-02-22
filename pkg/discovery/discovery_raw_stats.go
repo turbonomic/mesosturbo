@@ -1,10 +1,10 @@
 package discovery
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/turbonomic/mesosturbo/pkg/data"
 	"time"
-	"fmt"
 )
 
 type RawStatsCache struct {

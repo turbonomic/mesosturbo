@@ -4,8 +4,8 @@ import (
 	"github.com/turbonomic/turbo-go-sdk/pkg/builder"
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 
-	"github.com/golang/glog"
 	"fmt"
+	"github.com/golang/glog"
 	"github.com/turbonomic/mesosturbo/pkg/data"
 )
 
@@ -15,8 +15,8 @@ const PROXY_VM_IP string = "Proxy_VM_IP"
 // This will create a proxy VM in the server. Hypervisor probes in the server will discover and manage the Agent VMs
 type VMEntityBuilder struct {
 	nodeRepository *NodeRepository
-	errorCollector  *ErrorCollector
-	agent *data.Agent
+	errorCollector *ErrorCollector
+	agent          *data.Agent
 }
 
 // Build VM EntityDTO using the agent listed in the 'state' json returned from the Mesos Master
@@ -80,7 +80,7 @@ func generateReconciliationMetaData() *proto.EntityDTO_ReplacementEntityMetaData
 	replacementEntityMetaDataBuilder := builder.NewReplacementEntityMetaDataBuilder()
 	replacementEntityMetaDataBuilder.Matching(PROXY_VM_IP)
 	replacementEntityMetaDataBuilder.
-	PatchSelling(proto.CommodityDTO_CPU_PROVISIONED).
+		PatchSelling(proto.CommodityDTO_CPU_PROVISIONED).
 		PatchSelling(proto.CommodityDTO_MEM_PROVISIONED).
 		PatchSelling(proto.CommodityDTO_CLUSTER).
 		PatchSelling(proto.CommodityDTO_VCPU).
@@ -92,7 +92,7 @@ func generateReconciliationMetaData() *proto.EntityDTO_ReplacementEntityMetaData
 
 // ========================== Metrics and commodities =========================================
 func (nb *VMEntityBuilder) vmCommSold(agentEntity *AgentEntity) ([]*proto.CommodityDTO, error) {
-	if agentEntity == nil || agentEntity.node == nil{
+	if agentEntity == nil || agentEntity.node == nil {
 		return nil, fmt.Errorf("[VMEntityBuilder] Null agent while creating commodities")
 	}
 	agentInfo := agentEntity.node
@@ -124,7 +124,7 @@ func (nb *VMEntityBuilder) vmCommSold(agentEntity *AgentEntity) ([]*proto.Commod
 
 	// VMem
 	memCap := getEntityMetricValue(agentEntity, data.MEM, data.CAP, nb.errorCollector)
-	memUsed := getEntityMetricValue(agentEntity,data.MEM, data.USED, nb.errorCollector)
+	memUsed := getEntityMetricValue(agentEntity, data.MEM, data.USED, nb.errorCollector)
 	vMemComm, err := builder.NewCommodityDTOBuilder(proto.CommodityDTO_VMEM).
 		Capacity(*memCap).
 		Used(*memUsed).
@@ -154,4 +154,3 @@ func (nb *VMEntityBuilder) vmCommSold(agentEntity *AgentEntity) ([]*proto.Commod
 
 	return commoditiesSold, nil
 }
-

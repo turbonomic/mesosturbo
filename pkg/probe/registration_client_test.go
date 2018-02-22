@@ -1,12 +1,12 @@
 package probe
 
 import (
-	"testing"
-	"reflect"
-	"github.com/turbonomic/mesosturbo/pkg/conf"
 	"fmt"
-	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 	"github.com/stretchr/testify/assert"
+	"github.com/turbonomic/mesosturbo/pkg/conf"
+	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
+	"reflect"
+	"testing"
 )
 
 func TestNewMesosRegistrationClient(t *testing.T) {
@@ -14,7 +14,7 @@ func TestNewMesosRegistrationClient(t *testing.T) {
 	masters = append(masters, conf.Apache)
 	masters = append(masters, conf.DCOS)
 
-	for _,y := range masters {
+	for _, y := range masters {
 		expectedClient := &MesosRegistrationClient{
 			mesosMasterType: y,
 		}
@@ -61,25 +61,25 @@ func TestMesosSupplyChain(t *testing.T) {
 	}
 
 	// Commodities sold
-	expectedSoldComms := []proto.CommodityDTO_CommodityType {vCpuType, vMemType, appCommType}
+	expectedSoldComms := []proto.CommodityDTO_CommodityType{vCpuType, vMemType, appCommType}
 	testCommsSold(t, containerDto, expectedSoldComms)
 
-	expectedSoldComms = []proto.CommodityDTO_CommodityType {vCpuType, vMemType, vCpuProvisionedType, vMemProvisionedType, clusterType}
+	expectedSoldComms = []proto.CommodityDTO_CommodityType{vCpuType, vMemType, vCpuProvisionedType, vMemProvisionedType, clusterType}
 	testCommsSold(t, vmDto, expectedSoldComms)
 
-	expectedSoldComms = []proto.CommodityDTO_CommodityType {}
+	expectedSoldComms = []proto.CommodityDTO_CommodityType{}
 	testCommsSold(t, appDto, expectedSoldComms)
 
 	// Commodities Bought
 	var expectedBoughtComms map[proto.EntityDTO_EntityType][]proto.CommodityDTO_CommodityType
 
 	expectedBoughtComms = make(map[proto.EntityDTO_EntityType][]proto.CommodityDTO_CommodityType)
-	expectedBoughtComms[vmType] = []proto.CommodityDTO_CommodityType {vCpuType, vMemType, vCpuProvisionedType, vMemProvisionedType, clusterType}
-	testCommsBought(t, containerDto, expectedBoughtComms)	// Container
+	expectedBoughtComms[vmType] = []proto.CommodityDTO_CommodityType{vCpuType, vMemType, vCpuProvisionedType, vMemProvisionedType, clusterType}
+	testCommsBought(t, containerDto, expectedBoughtComms) // Container
 
 	expectedBoughtComms = make(map[proto.EntityDTO_EntityType][]proto.CommodityDTO_CommodityType)
-	expectedBoughtComms[containerType] = []proto.CommodityDTO_CommodityType {vCpuType, vMemType, appCommType}
-	testCommsBought(t, appDto, expectedBoughtComms)		// Application
+	expectedBoughtComms[containerType] = []proto.CommodityDTO_CommodityType{vCpuType, vMemType, appCommType}
+	testCommsBought(t, appDto, expectedBoughtComms) // Application
 }
 
 func TestIdentifyingField(t *testing.T) {
@@ -113,8 +113,8 @@ func TestIdentifyingFieldInMesosAcctMap(t *testing.T) {
 func TestApacheMesosAccountMap(t *testing.T) {
 	client := NewRegistrationClient(conf.Apache)
 
-	expectedFields := [...]string {client.GetIdentifyingFields(), string(conf.MasterIPPort),
-						string(conf.MasterUsername), string(conf.MasterPassword)}
+	expectedFields := [...]string{client.GetIdentifyingFields(), string(conf.MasterIPPort),
+		string(conf.MasterUsername), string(conf.MasterPassword)}
 
 	var acctDefEntryMap map[string]*proto.AccountDefEntry
 	acctDefEntryMap = make(map[string]*proto.AccountDefEntry)
@@ -133,9 +133,9 @@ func TestApacheMesosAccountMap(t *testing.T) {
 func TestDCOSMesosAccountMap(t *testing.T) {
 	client := NewRegistrationClient(conf.DCOS)
 
-	expectedFields := [...]string {client.GetIdentifyingFields(), string(conf.MasterIPPort),
+	expectedFields := [...]string{client.GetIdentifyingFields(), string(conf.MasterIPPort),
 		string(conf.MasterUsername), string(conf.MasterPassword)}
-	absentFields := [...]string {string(conf.FrameworkIP), string(conf.FrameworkPort)}
+	absentFields := [...]string{string(conf.FrameworkIP), string(conf.FrameworkPort)}
 
 	var acctDefEntryMap map[string]*proto.AccountDefEntry
 	acctDefEntryMap = make(map[string]*proto.AccountDefEntry)
@@ -168,7 +168,7 @@ func testCommsSold(t *testing.T, templateDto *proto.TemplateDTO, expectedSoldCom
 }
 
 func testCommsBought(t *testing.T, templateDto *proto.TemplateDTO, expectedBoughtComms map[proto.EntityDTO_EntityType][]proto.CommodityDTO_CommodityType) {
-	var commsBought  []*proto.TemplateDTO_CommBoughtProviderProp
+	var commsBought []*proto.TemplateDTO_CommBoughtProviderProp
 	commsBought = templateDto.CommodityBought
 
 	var templateCommsBought []*proto.TemplateCommodity
@@ -189,5 +189,3 @@ func testCommsBoughtPerProvider(t *testing.T, templateComms []*proto.TemplateCom
 
 	}
 }
-
-

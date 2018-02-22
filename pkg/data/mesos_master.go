@@ -9,10 +9,10 @@ type MesosMaster struct {
 	Leader string
 	Pid    string
 	//cluster
-	Cluster      ClusterInfo
-	AgentMap     map[string]*Agent
-	FrameworkMap map[string]*Framework
-	TaskMap      map[string]*Task
+	Cluster           ClusterInfo
+	AgentMap          map[string]*Agent
+	FrameworkMap      map[string]*Framework
+	TaskMap           map[string]*Task
 	TimeSinceLastDisc *time.Time
-	AgentList 	[]*Agent
+	AgentList         []*Agent
 }

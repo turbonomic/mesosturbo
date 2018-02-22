@@ -1,9 +1,9 @@
 package master
 
 import (
-	"github.com/golang/glog"
-	"fmt"
 	"encoding/json"
+	"fmt"
+	"github.com/golang/glog"
 	"github.com/turbonomic/mesosturbo/pkg/data"
 )
 
@@ -17,11 +17,11 @@ const (
 	DCOS_LoginPath      DCOSEndpointPath = "/acs/api/v1/auth/login"
 )
 
-
 // Endpoint paths for Apache Agent
 type DCOSAgentEndpointPath string
+
 const (
-	DCOS_StatsPath      DCOSAgentEndpointPath = "/monitor/statistics.json"
+	DCOS_StatsPath DCOSAgentEndpointPath = "/monitor/statistics.json"
 )
 
 // Endpoint store containing endpoint and parsers for DCOS Mesos Master
@@ -55,7 +55,6 @@ func NewDCOSMesosEndpointStore() *MasterEndpointStore {
 	return store
 }
 
-
 // Endpoint store containing endpoint and parsers for Apache Mesos Master
 func NewDCOSAgentEndpointStore() *AgentEndpointStore {
 	store := &AgentEndpointStore{
@@ -71,7 +70,6 @@ func NewDCOSAgentEndpointStore() *AgentEndpointStore {
 	}
 	return store
 }
-
 
 // ============================================ DCOS Login Parser ======================================================
 

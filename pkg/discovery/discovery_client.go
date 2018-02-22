@@ -20,10 +20,10 @@ const (
 // Discovery Client for the Mesos Probe
 // Implements the TurboDiscoveryClient interface
 type MesosDiscoveryClient struct {
-	targetConf          *conf.MesosTargetConf //  target configuration
-	MesosLeader         *MesosLeader          // discovered leader and its configuration
+	targetConf  *conf.MesosTargetConf //  target configuration
+	MesosLeader *MesosLeader          // discovered leader and its configuration
 
-						  // Map of targetId and Mesos Master
+	// Map of targetId and Mesos Master
 	metricsStore        *MesosMetricsMetadataStore
 	mesosMaster         *data.MesosMaster
 	prevCycleStatsCache *RawStatsCache
@@ -31,10 +31,10 @@ type MesosDiscoveryClient struct {
 }
 
 type SelectionStrategy string
-const (
 
-	FIXED_AGENT_SIZE SelectionStrategy = "Fixed_Agent_Size"
-	FIXED_WORKER_SIZE  SelectionStrategy = "Fixed_Worker_Size"
+const (
+	FIXED_AGENT_SIZE     SelectionStrategy = "Fixed_Agent_Size"
+	FIXED_WORKER_SIZE    SelectionStrategy = "Fixed_Worker_Size"
 	ONE_WORKER_PER_AGENT SelectionStrategy = "One_Worker_Per_Agent"
 )
 
@@ -42,7 +42,7 @@ type DiscoveryWorkerStrategy interface {
 	GetDiscoveryWorkerGroup(agentList []*data.Agent) []*DiscoveryWorker
 }
 
-func (discoveryClient *MesosDiscoveryClient) CreateDiscoveryWorker(st SelectionStrategy, count int)  []*DiscoveryWorker {
+func (discoveryClient *MesosDiscoveryClient) CreateDiscoveryWorker(st SelectionStrategy, count int) []*DiscoveryWorker {
 	var workerGroup []*DiscoveryWorker
 	agentList := discoveryClient.agentList
 	var agentSelector AgentSelector
@@ -76,7 +76,6 @@ func (discoveryClient *MesosDiscoveryClient) CreateDiscoveryWorker(st SelectionS
 	return workerGroup
 }
 
-
 func NewDiscoveryClient(mesosMasterType conf.MesosMasterType, targetConf *conf.MesosTargetConf) (probe.TurboDiscoveryClient, error) {
 	if targetConf == nil {
 		return nil, fmt.Errorf("[MesosDiscoveryClient] Null target config")
@@ -90,9 +89,9 @@ func NewDiscoveryClient(mesosMasterType conf.MesosMasterType, targetConf *conf.M
 	}
 
 	client := &MesosDiscoveryClient{
-		targetConf:      targetConf,
+		targetConf:          targetConf,
 		prevCycleStatsCache: &RawStatsCache{},
-		MesosLeader: mesosLeader,
+		MesosLeader:         mesosLeader,
 	}
 
 	// Monitoring metadata
@@ -181,7 +180,7 @@ func (discoveryClient *MesosDiscoveryClient) Discover(accountValues []*proto.Acc
 	go func() {
 		for nodeRepos := range workerResponseQueue {
 			slice = append(slice, nodeRepos)
-			wg.Done()   // ** move the `Done()` call here
+			wg.Done() // ** move the `Done()` call here
 		}
 	}()
 	wg.Wait()
@@ -205,15 +204,15 @@ func (handler *MesosDiscoveryClient) parseMesosState(stateResp *data.MesosAPIRes
 	mesosMaster := &data.MesosMaster{
 		Id:     stateResp.Id,
 		Leader: stateResp.Leader,
-		Pid: stateResp.Pid,
+		Pid:    stateResp.Pid,
 	}
 	// Agent Map
 	mesosMaster.AgentMap = make(map[string]*data.Agent)
 	handler.agentList = []*data.Agent{}
 	for idx, _ := range stateResp.Agents {
 		agent := stateResp.Agents[idx]
-		agent.ClusterName = handler.targetConf.MasterIPPort	//Using target scope as cluster scope to handle
-									// deployments where the Cluster is not named
+		agent.ClusterName = handler.targetConf.MasterIPPort //Using target scope as cluster scope to handle
+		// deployments where the Cluster is not named
 		glog.V(3).Infof("Agent : %s Id: %s", agent.Name+"::"+agent.Pid, agent.Id)
 		agent.IP, agent.PortNum = getSlaveIP(agent)
 		mesosMaster.AgentMap[agent.Id] = &agent
@@ -223,7 +222,7 @@ func (handler *MesosDiscoveryClient) parseMesosState(stateResp *data.MesosAPIRes
 	// Cluster
 	mesosMaster.Cluster.MasterIP = stateResp.Leader
 	// Note - Using target scope as cluster scope to handle  deployments where the Cluster is not named
-	mesosMaster.Cluster.ClusterName = handler.targetConf.MasterIPPort    //stateResp.ClusterName
+	mesosMaster.Cluster.ClusterName = handler.targetConf.MasterIPPort //stateResp.ClusterName
 
 	if stateResp.Frameworks == nil {
 		nerr := fmt.Errorf("Error getting frameworks response, only agents will be visible")
@@ -291,7 +290,6 @@ func logMesosSummary(mesosMaster *data.MesosMaster) {
 		glog.V(4).Infof("	Task Id: %s, Name: %s", task.Id, task.Name)
 	}
 }
-
 
 func (client *MesosDiscoveryClient) createDiscoveryResponse(workerResponseList []DiscoveryWorkerResponse) (*proto.DiscoveryResponse, error) {
 	var entityDtos []*proto.EntityDTO

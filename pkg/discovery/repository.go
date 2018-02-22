@@ -1,11 +1,11 @@
 package discovery
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/turbonomic/mesosturbo/pkg/data"
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
 	"strings"
-	"fmt"
 )
 
 //// Object which holds the values for different metrics for all the resources of an entity
@@ -28,6 +28,7 @@ type Repository interface {
 type Metric struct {
 	value *float64
 }
+
 //
 //// Object which holds the values for different metrics for all the resources of an entity
 //type MetricMap struct {
@@ -40,8 +41,8 @@ type Metric struct {
 // It consists of an Agent entity that represents the Node. Tasks running on the node are represented using TaskEntity.
 // There is also a corresponding ContainerEntity for each task.
 type NodeRepository struct {
-	agentEntity *AgentEntity
-	taskEntities map[string]*TaskEntity
+	agentEntity       *AgentEntity
+	taskEntities      map[string]*TaskEntity
 	containerEntities map[string]*ContainerEntity
 }
 
@@ -50,18 +51,18 @@ func NewNodeRepository(agentId string) *NodeRepository {
 	et := proto.EntityDTO_VIRTUAL_MACHINE
 	agentEntity := &AgentEntity{
 		entityType: et,
-		id: agentId,
-		metrics: make(map[data.ResourceType]map[data.MetricPropType]*Metric), //NewMetricMap(agentId),
+		id:         agentId,
+		metrics:    make(map[data.ResourceType]map[data.MetricPropType]*Metric), //NewMetricMap(agentId),
 	}
 	return &NodeRepository{
-		agentEntity: agentEntity,
-		taskEntities: make(map[string]*TaskEntity),
+		agentEntity:       agentEntity,
+		taskEntities:      make(map[string]*TaskEntity),
 		containerEntities: make(map[string]*ContainerEntity),
 	}
 }
 
 const (
-	APP_PREFIX string = "APP-"
+	APP_PREFIX       string = "APP-"
 	CONTAINER_PREFIX string = "POD-"
 )
 
@@ -70,8 +71,8 @@ func (nodeRepos *NodeRepository) CreateTaskEntity(id string) *TaskEntity {
 	taskId := GetRepositoryId(et, id)
 	taskEntity := &TaskEntity{
 		entityType: et,
-		id: taskId,
-		metrics: make(map[data.ResourceType]map[data.MetricPropType]*Metric), //NewMetricMap(id),
+		id:         taskId,
+		metrics:    make(map[data.ResourceType]map[data.MetricPropType]*Metric), //NewMetricMap(id),
 	}
 	nodeRepos.taskEntities[taskId] = taskEntity
 	return taskEntity
@@ -82,8 +83,8 @@ func (nodeRepos *NodeRepository) CreateContainerEntity(id string) *ContainerEnti
 	containerId := GetRepositoryId(et, id)
 	containerEntity := &ContainerEntity{
 		entityType: et,
-		id: containerId,
-		metrics: make(map[data.ResourceType]map[data.MetricPropType]*Metric), //NewMetricMap(id),
+		id:         containerId,
+		metrics:    make(map[data.ResourceType]map[data.MetricPropType]*Metric), //NewMetricMap(id),
 	}
 	nodeRepos.containerEntities[containerId] = containerEntity
 	return containerEntity
@@ -102,14 +103,14 @@ func (nodeRepos *NodeRepository) GetContainerEntities() map[string]*ContainerEnt
 }
 
 func (nodeRepos *NodeRepository) GetEntity(entityType proto.EntityDTO_EntityType, id string) MesosEntity {
-	if (entityType == proto.EntityDTO_VIRTUAL_MACHINE && nodeRepos.agentEntity.GetId() == id) {
+	if entityType == proto.EntityDTO_VIRTUAL_MACHINE && nodeRepos.agentEntity.GetId() == id {
 		return nodeRepos.agentEntity
 	}
-	if (entityType == proto.EntityDTO_APPLICATION) {
+	if entityType == proto.EntityDTO_APPLICATION {
 		taskId := GetRepositoryId(proto.EntityDTO_APPLICATION, id)
 		return nodeRepos.taskEntities[taskId]
 	}
-	if (entityType == proto.EntityDTO_CONTAINER) {
+	if entityType == proto.EntityDTO_CONTAINER {
 		containerId := GetRepositoryId(proto.EntityDTO_CONTAINER, id)
 		return nodeRepos.containerEntities[containerId]
 	}
@@ -119,15 +120,15 @@ func (nodeRepos *NodeRepository) GetEntity(entityType proto.EntityDTO_EntityType
 
 func (nodeRepos *NodeRepository) GetEntityInstances(entityType proto.EntityDTO_EntityType) []MesosEntity {
 	var entityList []MesosEntity
-	if (entityType == proto.EntityDTO_VIRTUAL_MACHINE) {
+	if entityType == proto.EntityDTO_VIRTUAL_MACHINE {
 		entityList = append(entityList, nodeRepos.agentEntity)
 	}
-	if (entityType == proto.EntityDTO_APPLICATION) {
+	if entityType == proto.EntityDTO_APPLICATION {
 		for _, val := range nodeRepos.taskEntities {
 			entityList = append(entityList, val)
 		}
 	}
-	if (entityType == proto.EntityDTO_CONTAINER) {
+	if entityType == proto.EntityDTO_CONTAINER {
 		for _, val := range nodeRepos.containerEntities {
 			entityList = append(entityList, val)
 		}
@@ -135,11 +136,10 @@ func (nodeRepos *NodeRepository) GetEntityInstances(entityType proto.EntityDTO_E
 	return entityList
 }
 
-
 // Convenience function to generate unique id's for a repository entity
 func GetRepositoryId(entityType proto.EntityDTO_EntityType, id string) string {
 	if entityType == proto.EntityDTO_APPLICATION {
-		return strings.Join([]string{APP_PREFIX,  id}, "")
+		return strings.Join([]string{APP_PREFIX, id}, "")
 	} else if entityType == proto.EntityDTO_CONTAINER {
 		return strings.Join([]string{CONTAINER_PREFIX, id}, "")
 	}
@@ -150,9 +150,9 @@ func GetRepositoryId(entityType proto.EntityDTO_EntityType, id string) string {
 // Object representing the Agent in the Mesos environment
 type AgentEntity struct {
 	entityType proto.EntityDTO_EntityType
-	id string
-	metrics MetricMap
-	node *data.Agent
+	id         string
+	metrics    MetricMap
+	node       *data.Agent
 }
 
 func (agent *AgentEntity) GetId() string {
@@ -178,9 +178,9 @@ func (agent *AgentEntity) GetResourceMetric(resourceType data.ResourceType, metr
 // Object representing an Application running on an Agent in the Mesos environment
 type TaskEntity struct {
 	entityType proto.EntityDTO_EntityType
-	id string
-	metrics  MetricMap
-	task *data.Task
+	id         string
+	metrics    MetricMap
+	task       *data.Task
 }
 
 func (task *TaskEntity) GetId() string {
@@ -195,7 +195,6 @@ func (task *TaskEntity) GetResourceMetrics() MetricMap {
 	return task.metrics
 }
 
-
 func (task *TaskEntity) GetResourceMetric(resourceType data.ResourceType, metricType data.MetricPropType) (*Metric, error) {
 	metric, err := task.metrics.GetResourceMetric(resourceType, metricType)
 	if err != nil {
@@ -207,9 +206,9 @@ func (task *TaskEntity) GetResourceMetric(resourceType data.ResourceType, metric
 // Object representing a container running on an Agent in the Mesos environment
 type ContainerEntity struct {
 	entityType proto.EntityDTO_EntityType
-	id string
-	metrics  MetricMap
-	task *data.Task
+	id         string
+	metrics    MetricMap
+	task       *data.Task
 }
 
 func (container *ContainerEntity) GetId() string {
@@ -271,7 +270,7 @@ func (resourceMetrics MetricMap) printMetrics() {
 	for rt, resourceMap := range resourceMetrics { //.metricMap {
 		//fmt.Printf("Resource Type %s\n", rt)
 		for mkey, metric := range resourceMap {
-			if (metric != nil) {
+			if metric != nil {
 				glog.Infof("\t\t%s::%s : %f\n", rt, mkey, *metric.value)
 				fmt.Printf("\t\t%s::%s : %f\n", rt, mkey, *metric.value)
 			} else {

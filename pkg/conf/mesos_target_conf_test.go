@@ -26,7 +26,7 @@ func TestMissingMasterIPPort(t *testing.T) {
 
 func TestMissingMasterType(t *testing.T) {
 	conf := &MesosTargetConf{
-		MasterIPPort:       "127.0.0.1:5050",
+		MasterIPPort:   "127.0.0.1:5050",
 		MasterUsername: "user",
 		MasterPassword: "pwd",
 	}
@@ -40,7 +40,7 @@ func TestMissingMasterType(t *testing.T) {
 func TestGetAccountFields(t *testing.T) {
 	conf := &MesosTargetConf{
 		Master:         Apache,
-		MasterIPPort:       "127.0.0.1:5050",
+		MasterIPPort:   "127.0.0.1:5050",
 		MasterUsername: "user",
 		MasterPassword: "pwd",
 	}

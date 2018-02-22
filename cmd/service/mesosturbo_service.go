@@ -1,32 +1,32 @@
 package service
 
 import (
+	"fmt"
 	"github.com/golang/glog"
-	"os"
-	"github.com/turbonomic/turbo-go-sdk/pkg/service"
+	"github.com/spf13/pflag"
 	"github.com/turbonomic/mesosturbo/pkg/conf"
 	"github.com/turbonomic/mesosturbo/pkg/discovery"
 	mesos "github.com/turbonomic/mesosturbo/pkg/probe"
-	"github.com/turbonomic/turbo-go-sdk/pkg/probe"
-	"github.com/spf13/pflag"
-	"fmt"
 	"github.com/turbonomic/turbo-go-sdk/pkg/mediationcontainer"
+	"github.com/turbonomic/turbo-go-sdk/pkg/probe"
+	"github.com/turbonomic/turbo-go-sdk/pkg/service"
+	"os"
 )
-
 
 // VMTServer has all the context and params needed to run a Scheduler
 type MesosTurboService struct {
-	MesosMasterConfig  string	//path to the mesos master config
-	TurboCommConfig    string	// path to the turbo communication config file
+	MesosMasterConfig string //path to the mesos master config
+	TurboCommConfig   string // path to the turbo communication config file
 
 	// config for mesos
-	Master             string
-	MasterIPPort       string
-	MasterUsername     string
-	MasterPassword     string
+	Master         string
+	MasterIPPort   string
+	MasterUsername string
+	MasterPassword string
 
 	// config for turbo server
 	TurboServerUrl     string
+	TurboServerVersion string
 	OpsManagerUsername string
 	OpsManagerPassword string
 }
@@ -48,6 +48,7 @@ func (s *MesosTurboService) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.MasterPassword, "masterpwd", s.MasterPassword, "Password for the Mesos Master")
 
 	fs.StringVar(&s.TurboServerUrl, "turboserverurl", s.TurboServerUrl, "Url for Turbo Server")
+	fs.StringVar(&s.TurboServerVersion, "turboserverversion", s.TurboServerVersion, "Version for Turbo Server")
 	fs.StringVar(&s.OpsManagerUsername, "opsmanagerusername", s.OpsManagerUsername, "Username for Ops Manager")
 	fs.StringVar(&s.OpsManagerPassword, "opsmanagerpassword", s.OpsManagerPassword, "Password for Ops Manager")
 }
@@ -57,7 +58,7 @@ func (s *MesosTurboService) Run(_ []string) error {
 
 	probeCategory := string(conf.CloudNative)
 
-	targetConf :=  s.MesosMasterConfig
+	targetConf := s.MesosMasterConfig
 	turboCommConf := s.TurboCommConfig
 
 	// ----------- Mesos Target Config
@@ -70,22 +71,22 @@ func (s *MesosTurboService) Run(_ []string) error {
 		var master conf.MesosMasterType
 		if s.Master == string(conf.Apache) {
 			master = conf.Apache
-		} else if s.Master == string(conf.DCOS){
+		} else if s.Master == string(conf.DCOS) {
 			master = conf.DCOS
 		} else {
 			mesosConfErr = fmt.Errorf("Invalid Mesos Master Type")
 		}
-		if (master == "") {
+		if master == "" {
 			mesosConfErr = fmt.Errorf("Mesos Master Type is required")
 		}
 
-		if (s.MasterIPPort == "") {
+		if s.MasterIPPort == "" {
 			mesosConfErr = fmt.Errorf("Mesos Master IP::Port list is required")
 		}
 
 		mesosTargetConf = &conf.MesosTargetConf{
-			Master: master,
-			MasterIPPort: s.MasterIPPort,
+			Master:         master,
+			MasterIPPort:   s.MasterIPPort,
 			MasterUsername: s.MasterUsername,
 			MasterPassword: s.MasterPassword,
 		}
@@ -103,18 +104,18 @@ func (s *MesosTurboService) Run(_ []string) error {
 	if turboCommConf != "" {
 		turboCommConfigData, turboConfErr = service.ParseTurboCommunicationConfig(turboCommConf)
 	} else {
-		wsConfig := mediationcontainer.WebSocketConfig {
-		}
+		wsConfig := mediationcontainer.WebSocketConfig{}
 
 		servermeta := mediationcontainer.ServerMeta{
 			TurboServer: s.TurboServerUrl,
+			Version:     s.TurboServerVersion,
 		}
 		restApiConfig := service.RestAPIConfig{
 			OpsManagerUsername: s.OpsManagerUsername,
 			OpsManagerPassword: s.OpsManagerPassword,
 		}
 
-		turboCommConfigData = &service.TurboCommunicationConfig {
+		turboCommConfigData = &service.TurboCommunicationConfig{
 			servermeta,
 			wsConfig,
 			restApiConfig,
@@ -135,7 +136,7 @@ func (s *MesosTurboService) Run(_ []string) error {
 	discoveryClient, err := discovery.NewDiscoveryClient(mesosMasterType, mesosTargetConf)
 
 	if err != nil {
-		glog.Errorf("Error creating discovery client for "+string(mesosMasterType)+"::"+mesosTargetConf.MasterIPPort +"\n", err.Error())
+		glog.Errorf("Error creating discovery client for "+string(mesosMasterType)+"::"+mesosTargetConf.MasterIPPort+"\n", err.Error())
 		os.Exit(1)
 	}
 
@@ -144,8 +145,8 @@ func (s *MesosTurboService) Run(_ []string) error {
 		service.NewTAPServiceBuilder().
 			WithTurboCommunicator(turboCommConfigData).
 			WithTurboProbe(probe.NewProbeBuilder(string(mesosMasterType), probeCategory).
-			RegisteredBy(registrationClient).
-			DiscoversTarget(mesosTarget, discoveryClient)).
+				RegisteredBy(registrationClient).
+				DiscoversTarget(mesosTarget, discoveryClient)).
 			Create()
 
 	if err != nil {

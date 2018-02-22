@@ -1,15 +1,14 @@
 package discovery
 
 import (
-	"github.com/turbonomic/mesosturbo/pkg/data"
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/turbonomic/mesosturbo/pkg/conf"
-	"sync"
-	"fmt"
-	"time"
+	"github.com/turbonomic/mesosturbo/pkg/data"
 	"github.com/turbonomic/turbo-go-sdk/pkg/proto"
+	"sync"
+	"time"
 )
-
 
 // =============================================== Discovery and local Monitoring Tasks ======================================
 // Worker Task to run discovery and monitoring on an agent node
@@ -18,22 +17,21 @@ type AgentTask interface {
 }
 
 type AgentTaskResponse struct {
-	agent *data.Agent
+	agent          *data.Agent
 	nodeRepository *NodeRepository
-	entityDTOs []*proto.EntityDTO
-	errors	*ErrorCollector
+	entityDTOs     []*proto.EntityDTO
+	errors         *ErrorCollector
 }
 
 // Implementation for a Mesos Agent
 type MesosAgentTask struct {
-	node *data.Agent
-	masterConf     *conf.MasterConf
-	metricsStore 	*MesosMetricsMetadataStore
-	rawStatsCache 	*RawStatsCache
+	node          *data.Agent
+	masterConf    *conf.MasterConf
+	metricsStore  *MesosMetricsMetadataStore
+	rawStatsCache *RawStatsCache
 }
 
-
-func(agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
+func (agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
 	ec := new(ErrorCollector)
 	// Discovery related
 	// Create Repository with entity objects for node, tasks and containers based on the Mesos data structures
@@ -42,7 +40,7 @@ func(agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
 	nodeRepository.agentEntity.node = node
 	for _, task := range node.TaskMap {
 		taskEntity := nodeRepository.CreateTaskEntity(task.Id)
-		taskEntity.task = task	//save in the entity
+		taskEntity.task = task //save in the entity
 
 		containerEntity := nodeRepository.CreateContainerEntity(task.Id)
 		containerEntity.task = task // save in the entity
@@ -55,10 +53,10 @@ func(agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
 	monitoringPropsMap = createMonitoringProps(nodeRepository, metricsStore.metricDefMap)
 
 	monitorTarget := &MonitorTarget{
-		targetId: agentTask.node.IP,
-		config: agentTask.masterConf,
-		repository: nodeRepository,
-		rawStatsCache: agentTask.rawStatsCache,
+		targetId:        agentTask.node.IP,
+		config:          agentTask.masterConf,
+		repository:      nodeRepository,
+		rawStatsCache:   agentTask.rawStatsCache,
 		monitoringProps: monitoringPropsMap,
 	}
 
@@ -80,10 +78,10 @@ func(agentTask MesosAgentTask) ProcessAgent() *AgentTaskResponse {
 	//}
 
 	response := &AgentTaskResponse{
-			nodeRepository: nodeRepository,
-			errors: ec,
-			agent: agentTask.node,
-			}
+		nodeRepository: nodeRepository,
+		errors:         ec,
+		agent:          agentTask.node,
+	}
 
 	if entityDTOs != nil {
 		response.entityDTOs = entityDTOs
@@ -128,26 +126,26 @@ type DiscoveryWorkerResponse []*AgentTaskResponse
 type DiscoveryWorker struct {
 	name string
 	// complete mesos master state and config
-	masterConf     *conf.MasterConf
+	masterConf *conf.MasterConf
 	// subset of a agent map from the mesos master state
-	nodeList 	[]*data.Agent
-	nodeResponseQueue	chan *AgentTaskResponse //TODO: change to dto queue
+	nodeList          []*data.Agent
+	nodeResponseQueue chan *AgentTaskResponse //TODO: change to dto queue
 	// metrics collection related
-	metricsStore 	*MesosMetricsMetadataStore
-	rawStatsCache 	*RawStatsCache
+	metricsStore  *MesosMetricsMetadataStore
+	rawStatsCache *RawStatsCache
 }
 
 // Discovery worker for set of nodes grouped by certain criterion to distribute discovery
-func NewDiscoveryWorker (masterConf *conf.MasterConf, nodeList []*data.Agent, rawStatsCache *RawStatsCache) *DiscoveryWorker {
+func NewDiscoveryWorker(masterConf *conf.MasterConf, nodeList []*data.Agent, rawStatsCache *RawStatsCache) *DiscoveryWorker {
 	if nodeList == nil || len(nodeList) == 0 {
 		glog.Errorf("No agents specified for discovery worker")
 		return nil
 	}
 	worker := &DiscoveryWorker{
-		masterConf: masterConf,
-		nodeList: nodeList,
+		masterConf:        masterConf,
+		nodeList:          nodeList,
 		nodeResponseQueue: make(chan *AgentTaskResponse, 1),
-		rawStatsCache: rawStatsCache,
+		rawStatsCache:     rawStatsCache,
 	}
 
 	// Create metrics collector for this worker here and pass it to the different agent tasks
@@ -175,9 +173,9 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 			//fmt.Printf("%s : Begin Process Agent %d::%s\n", worker.name, idx, node.IP)
 			glog.V(3).Infof("%s: Begin Process Agent %d::%s", worker.name, idx, node.Id)
 			agentTask := &MesosAgentTask{
-				node: node,
-				masterConf: worker.masterConf,
-				metricsStore: worker.metricsStore,
+				node:          node,
+				masterConf:    worker.masterConf,
+				metricsStore:  worker.metricsStore,
 				rawStatsCache: worker.rawStatsCache,
 			}
 			nodeResponse := agentTask.ProcessAgent() //TODO: <-- returns node repository
@@ -185,13 +183,13 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 			//workerRepos[idx] = nodeResponse
 			worker.nodeResponseQueue <- nodeResponse //send it on the channel/queue
 			//fmt.Printf("%s : End Process Agent %d::%s, num of tasks: %d\n",  worker.name, idx, node.IP, len(nodeResponse.nodeRepository.taskEntities))
-			glog.V(3).Infof("%s : End Process Agent %d::%s, num of tasks: %d",  worker.name, idx, node.Id, len(nodeResponse.nodeRepository.taskEntities))
+			glog.V(3).Infof("%s : End Process Agent %d::%s, num of tasks: %d", worker.name, idx, node.Id, len(nodeResponse.nodeRepository.taskEntities))
 		}(idx)
 	}
 	go func() {
 		for nodeRepos := range worker.nodeResponseQueue {
 			agentTaskResponseList = append(agentTaskResponseList, nodeRepos)
-			wg.Done()   // ** move the `Done()` call here
+			wg.Done() // ** move the `Done()` call here
 		}
 	}()
 
@@ -200,16 +198,15 @@ func (worker *DiscoveryWorker) DoWork() DiscoveryWorkerResponse {
 	return DiscoveryWorkerResponse(agentTaskResponseList)
 }
 
-
 // ==============================================
 type StopWatch struct {
-	name string
+	name      string
 	startTime time.Time
-	elapsed time.Duration
+	elapsed   time.Duration
 }
 
 func NewStopWatch(name string) *StopWatch {
-	return &StopWatch{name:name,}
+	return &StopWatch{name: name}
 }
 
 func (watch *StopWatch) start() {
@@ -229,7 +226,7 @@ type AgentSelector interface {
 	GetAgents(agentList []*data.Agent) [][]*data.Agent
 }
 
-type SimpleAgentSelector struct {}
+type SimpleAgentSelector struct{}
 
 func (selector *SimpleAgentSelector) GetAgents(agentList []*data.Agent) [][]*data.Agent {
 	var agentGroup [][]*data.Agent
@@ -242,13 +239,12 @@ func (selector *SimpleAgentSelector) GetAgents(agentList []*data.Agent) [][]*dat
 	return agentGroup
 }
 
-
 type FixedAgentSizeSelector struct {
 	groupSize int
 }
 
 func NewFixedGroupAgentSelector(groupSize int) *FixedAgentSizeSelector {
-	return &FixedAgentSizeSelector{groupSize:groupSize,}
+	return &FixedAgentSizeSelector{groupSize: groupSize}
 }
 func (selector *FixedAgentSizeSelector) GetAgents(agentList []*data.Agent) [][]*data.Agent {
 	var agentGroup [][]*data.Agent
@@ -257,7 +253,7 @@ func (selector *FixedAgentSizeSelector) GetAgents(agentList []*data.Agent) [][]*
 	for i, _ := range agentList {
 		agent := agentList[i]
 		newAgentList = append(newAgentList, agent)
-		if ((i+1) % selector.groupSize) == 0 {
+		if ((i + 1) % selector.groupSize) == 0 {
 			agentGroup = append(agentGroup, newAgentList)
 			newAgentList = []*data.Agent{}
 		}
@@ -268,19 +264,17 @@ func (selector *FixedAgentSizeSelector) GetAgents(agentList []*data.Agent) [][]*
 	return agentGroup
 }
 
-
-
 type FixedWorkerSizeSelector struct {
 	groupSize int
 }
 
 func NewFixedWorkerSizeSelector(groupSize int) *FixedWorkerSizeSelector {
-	return &FixedWorkerSizeSelector{groupSize:groupSize,}
+	return &FixedWorkerSizeSelector{groupSize: groupSize}
 }
 func (selector *FixedWorkerSizeSelector) GetAgents(agentList []*data.Agent) [][]*data.Agent {
 
 	numOfAgentsPerGroup := len(agentList)
-	if (numOfAgentsPerGroup > selector.groupSize) {
+	if numOfAgentsPerGroup > selector.groupSize {
 		numOfAgentsPerGroup = len(agentList) / selector.groupSize
 	}
 	var agentGroup [][]*data.Agent
@@ -291,7 +285,7 @@ func (selector *FixedWorkerSizeSelector) GetAgents(agentList []*data.Agent) [][]
 		agent := agentList[i]
 		agentCounter++
 		newAgentList = append(newAgentList, agent)
-		if (agentCounter == numOfAgentsPerGroup) {
+		if agentCounter == numOfAgentsPerGroup {
 			agentGroup = append(agentGroup, newAgentList)
 			newAgentList = []*data.Agent{}
 			agentCounter = 0

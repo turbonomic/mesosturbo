@@ -68,14 +68,14 @@ type MetricSetter interface {
 // by connecting to the target
 type Monitor interface {
 	GetSourceName() MONITOR_NAME
-	Monitor(target *MonitorTarget) (error)
+	Monitor(target *MonitorTarget) error
 }
 
 type MonitorTarget struct {
-	targetId string
-	config   interface{}
-	repository Repository
-	rawStatsCache 	*RawStatsCache
+	targetId        string
+	config          interface{}
+	repository      Repository
+	rawStatsCache   *RawStatsCache
 	monitoringProps map[ENTITY_ID]*EntityMonitoringProps
 }
 
@@ -93,7 +93,7 @@ type DefaultMetricSetter struct {
 	entityType   data.EntityType
 	resourceType data.ResourceType
 	metricType   data.MetricPropType
-	name string
+	name         string
 }
 
 func (setter *DefaultMetricSetter) SetMetricValue(entity MesosEntity, value *float64) {
@@ -109,10 +109,10 @@ func (setter *DefaultMetricSetter) SetMetricValue(entity MesosEntity, value *flo
 	entityMetrics.SetResourceMetric(setter.resourceType, setter.metricType, value)
 }
 
-
 func (setter *DefaultMetricSetter) SetName(name string) {
 	setter.name = name
 }
+
 // ============================== MetricStore Implementation =========================================
 
 type MetricDefMap map[data.EntityType]map[data.ResourceType]map[data.MetricPropType]*MetricDef
@@ -149,7 +149,6 @@ func (mdm MetricDefMap) Get(et data.EntityType, rt data.ResourceType, mt data.Me
 	}
 	return metricMap[mt]
 }
-
 
 // Implementation for the MetricsStore for Mesos target
 type MesosMetricsMetadataStore struct {
@@ -213,7 +212,7 @@ func addDefaultMetricDef(entityType data.EntityType, resourceType data.ResourceT
 	metricSetter := &DefaultMetricSetter{
 		entityType:   entityType,
 		resourceType: resourceType,
-		metricType:   metricType,}
+		metricType:   metricType}
 	metricSetter.SetName(fmt.Sprintf("%s:%s:%s:%s", &metricSetter, entityType, resourceType, metricType))
 
 	metricDef := &MetricDef{

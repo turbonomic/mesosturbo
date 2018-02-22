@@ -97,22 +97,22 @@ func (registrationClient *MesosRegistrationClient) GetSupplyChainDefinition() []
 
 	containerVmExternalLink, err := containerVmExtLinkBuilder.Build()
 	if err != nil {
-		glog.Errorf("[MesosRegistrationClient] error creating vm external link : %s", err);
+		glog.Errorf("[MesosRegistrationClient] error creating vm external link : %s", err)
 	}
 	containerSupplyChainNodeBuilder.ConnectsTo(containerVmExternalLink)
 
 	appNode, err := appSupplyChainNodeBuilder.Create()
 	if err != nil {
-		glog.Errorf("[MesosRegistrationClient] error creating application node : %s", err);
+		glog.Errorf("[MesosRegistrationClient] error creating application node : %s", err)
 	}
 	containerNode, err := containerSupplyChainNodeBuilder.Create()
 	if err != nil {
-		glog.Errorf("[MesosRegistrationClient] error creating container node :  %s", err);
+		glog.Errorf("[MesosRegistrationClient] error creating container node :  %s", err)
 	}
 
 	vmNode, err := vmSupplyChainNodeBuilder.Create()
 	if err != nil {
-		glog.Errorf("[MesosRegistrationClient] error creating virtual machine node : %s", err);
+		glog.Errorf("[MesosRegistrationClient] error creating virtual machine node : %s", err)
 	}
 
 	supplyChainBuilder := supplychain.NewSupplyChainBuilder()
@@ -123,7 +123,7 @@ func (registrationClient *MesosRegistrationClient) GetSupplyChainDefinition() []
 
 	supplychain, err := supplyChainBuilder.Create()
 	if err != nil {
-		glog.Errorf("[MesosRegistrationClient] error creating supply chain  : %s", err);
+		glog.Errorf("[MesosRegistrationClient] error creating supply chain  : %s", err)
 	}
 
 	glog.Infof("[MesosRegistrationClient] Created supply chain")
