@@ -2,6 +2,7 @@ package: github.com/turbonomic/mesosturbo
 import:
 - package: github.com/golang/glog
 - package: github.com/spf13/pflag
+  version: v1.0.0
 - package: github.com/turbonomic/turbo-go-sdk
   subpackages:
   - pkg/builder
@@ -10,9 +11,8 @@ import:
   - pkg/proto
   - pkg/service
   - pkg/supplychain
-- package: github.com/davecgh/go-spew
-  version: ^1.1.0
 testImport:
 - package: github.com/stretchr/testify
+  version: v1.2.1
   subpackages:
   - assert
