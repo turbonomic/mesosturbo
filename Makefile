@@ -1,6 +1,6 @@
 OUTPUT_DIR=./_output
 
-SOURCE_DIRS = cmd pkg vendor
+SOURCE_DIRS = cmd pkg
 PACKAGES := go list ./... | grep -v /vendor | grep -v /out
 
 build: clean
