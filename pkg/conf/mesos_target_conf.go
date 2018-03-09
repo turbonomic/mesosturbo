@@ -173,35 +173,35 @@ func (mesosConf *MesosTargetConf) GetAccountValues() []*proto.AccountValue {
 		accountValues = append(accountValues, accVal)
 	}
 
-	if mesosConf.Master == Apache {
-		fmIpProp := string(FrameworkIP)
-		accVal = &proto.AccountValue{
-			Key:         &fmIpProp,
-			StringValue: &mesosConf.FrameworkIP,
-		}
-		accountValues = append(accountValues, accVal)
-
-		fmPort := string(FrameworkPort)
-		accVal = &proto.AccountValue{
-			Key:         &fmPort,
-			StringValue: &mesosConf.FrameworkPort,
-		}
-		accountValues = append(accountValues, accVal)
-
-		fmUserProp := string(FrameworkUsername)
-		accVal = &proto.AccountValue{
-			Key:         &fmUserProp,
-			StringValue: &mesosConf.FrameworkUser,
-		}
-		accountValues = append(accountValues, accVal)
-
-		fmPwd := string(FrameworkPassword)
-		accVal = &proto.AccountValue{
-			Key:         &fmPwd,
-			StringValue: &mesosConf.FrameworkPassword,
-		}
-		accountValues = append(accountValues, accVal)
-	}
+	//if mesosConf.Master == Apache {
+	//	fmIpProp := string(FrameworkIP)
+	//	accVal = &proto.AccountValue{
+	//		Key:         &fmIpProp,
+	//		StringValue: &mesosConf.FrameworkIP,
+	//	}
+	//	accountValues = append(accountValues, accVal)
+	//
+	//	fmPort := string(FrameworkPort)
+	//	accVal = &proto.AccountValue{
+	//		Key:         &fmPort,
+	//		StringValue: &mesosConf.FrameworkPort,
+	//	}
+	//	accountValues = append(accountValues, accVal)
+	//
+	//	fmUserProp := string(FrameworkUsername)
+	//	accVal = &proto.AccountValue{
+	//		Key:         &fmUserProp,
+	//		StringValue: &mesosConf.FrameworkUser,
+	//	}
+	//	accountValues = append(accountValues, accVal)
+	//
+	//	fmPwd := string(FrameworkPassword)
+	//	accVal = &proto.AccountValue{
+	//		Key:         &fmPwd,
+	//		StringValue: &mesosConf.FrameworkPassword,
+	//	}
+	//	accountValues = append(accountValues, accVal)
+	//}
 
 	glog.V(1).Infof("[GetAccountValues] account values %s\n", accountValues)
 

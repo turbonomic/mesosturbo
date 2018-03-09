@@ -1,5 +1,5 @@
-hash: c04a658166d2496b475239ff29ff644acdac086b795d10568dd7f986d8f850b8
-updated: 2018-02-23T09:58:04.267412787-05:00
+hash: f2961ddf465aaf93e98e8aa556b1f30860df2d94591b89cf94cd9906d7d993aa
+updated: 2018-03-09T14:55:51.832767152-05:00
 imports:
 - name: github.com/golang/glog
   version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
@@ -7,6 +7,8 @@ imports:
   version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
   subpackages:
   - proto
+- name: github.com/gorilla/websocket
+  version: 6f34763140ed8887aed6a044912009832b4733d7
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/turbonomic/turbo-api
@@ -15,8 +17,9 @@ imports:
   - pkg/api
   - pkg/client
 - name: github.com/turbonomic/turbo-go-sdk
-  version: 03603dc59c3a7d0e3552f9f98b590000b5e5c987
+  version: 36a45086d337dd115b0bfd737060c395a6fb3411
   subpackages:
+  - pkg
   - pkg/builder
   - pkg/mediationcontainer
   - pkg/probe
@@ -24,10 +27,6 @@ imports:
   - pkg/service
   - pkg/supplychain
   - pkg/version
-- name: golang.org/x/net
-  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
-  subpackages:
-  - websocket
 testImports:
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d

@@ -4,7 +4,9 @@ import:
 - package: github.com/spf13/pflag
   version: v1.0.0
 - package: github.com/turbonomic/turbo-go-sdk
+  version: master
   subpackages:
+  - pkg
   - pkg/builder
   - pkg/mediationcontainer
   - pkg/probe
